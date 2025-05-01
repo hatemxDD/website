@@ -1,3 +1,6 @@
 [submodule "labsearch"]
 	path = labsearch
 	url = https://github.com/hatemxDD/labsearch
+[submodule "server"]
+	path = server
+	url = https://github.com/hatemxDD/labsearch
