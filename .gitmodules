@@ -1,0 +1,3 @@
+[submodule "labsearch"]
+	path = labsearch
+	url = https://github.com/hatemxDD/labsearch
