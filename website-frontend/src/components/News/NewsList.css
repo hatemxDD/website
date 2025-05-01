@@ -1,0 +1,194 @@
+.newslist-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  background-color: #f8fafc;
+}
+
+.newslist-header {
+  text-align: center;
+  margin-bottom: 4rem;
+  padding: 4rem 2rem;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  color: white;
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.newslist-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml,<svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><rect width="1" height="1" fill="rgba(255,255,255,0.05)"/></svg>');
+  opacity: 0.1;
+}
+
+.newslist-header h1 {
+  font-size: 3.5rem;
+  margin: 0 0 1.5rem 0;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.newslist-header p {
+  font-size: 1.3rem;
+  opacity: 0.9;
+  margin: 0;
+  max-width: 700px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+.newslist-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 2.5rem;
+  padding: 1rem;
+}
+
+.newslist-card {
+  background: white;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  transition: all 0.4s ease;
+  cursor: pointer;
+  position: relative;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.newslist-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+.newslist-image-wrapper {
+  position: relative;
+  width: 100%;
+  height: 260px;
+  overflow: hidden;
+}
+
+.newslist-image-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s ease;
+}
+
+.newslist-card:hover .newslist-image-wrapper img {
+  transform: scale(1.08);
+}
+
+.newslist-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.2), rgba(0,0,0,0.7));
+  padding: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.newslist-category {
+  background: rgba(255, 255, 255, 0.95);
+  color: #0f172a;
+  padding: 0.6rem 1.2rem;
+  border-radius: 25px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.newslist-date {
+  color: white;
+  font-size: 0.9rem;
+  font-weight: 500;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 0.4rem 1rem;
+  border-radius: 15px;
+}
+
+.newslist-content {
+  padding: 2rem;
+}
+
+.newslist-content h2 {
+  font-size: 1.6rem;
+  margin: 0 0 1rem 0;
+  color: #0f172a;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.newslist-content p {
+  color: #475569;
+  margin: 0 0 1.5rem 0;
+  font-size: 1.1rem;
+  line-height: 1.6;
+}
+
+.newslist-author {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.newslist-author-name {
+  font-weight: 600;
+  color: #0f172a;
+  font-size: 1.1rem;
+}
+
+.newslist-author-role {
+  color: #64748b;
+  font-size: 0.95rem;
+}
+
+@media (max-width: 768px) {
+  .newslist-header h1 {
+    font-size: 2.8rem;
+  }
+  
+  .newslist-header p {
+    font-size: 1.1rem;
+  }
+  
+  .newslist-grid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+  
+  .newslist-image-wrapper {
+    height: 220px;
+  }
+}
+
+@media (max-width: 480px) {
+  .newslist-container {
+    padding: 1rem;
+  }
+  
+  .newslist-content {
+    padding: 1.5rem;
+  }
+  
+  .newslist-header {
+    padding: 3rem 1.5rem;
+  }
+  
+  .newslist-header h1 {
+    font-size: 2.2rem;
+  }
+} 
