@@ -16,11 +16,22 @@ interface AuthRequest extends Request {
 interface CreateNewsRequest {
   title: string;
   image: string;
+  content: string;
+  category: string;
+  status: string;
+  publishDate: Date;
+  authorId: number;
+  
 }
 
 interface UpdateNewsRequest {
   title?: string;
   image?: string;
+  content?: string;
+  category?: string;
+  tags?: string[];
+  status?: string;
+  publishDate?: Date;
 }
 
 // News Controller
@@ -33,7 +44,7 @@ const newsController = {
         return;
       }
 
-      const { title, image }: CreateNewsRequest = req.body;
+      const { title, image, content }: CreateNewsRequest = req.body;
       const authorId = req.user.id;
 
       // Create new news item
@@ -42,6 +53,8 @@ const newsController = {
           title,
           image,
           authorId,
+          content,
+          publishDate: new Date(),
         },
         include: {
           author: {
@@ -120,7 +133,7 @@ const newsController = {
   updateNews: async (req: AuthRequest, res: Response): Promise<void> => {
     try {
       const { id } = req.params;
-      const { title, image }: UpdateNewsRequest = req.body;
+      const { title, image , content , category, tags, status, publishDate }: UpdateNewsRequest = req.body;
 
       // Check if news exists
       const existingNews = await prisma.news.findUnique({
@@ -147,6 +160,11 @@ const newsController = {
       const updateData: UpdateNewsRequest = {};
       if (title) updateData.title = title;
       if (image) updateData.image = image;
+      if (content) updateData.content = content;
+      if (category) updateData.category = category;
+      if (tags) updateData.tags = tags;
+      if (status) updateData.status = status;
+      if (publishDate) updateData.publishDate = new Date(publishDate);
 
       // Update news
       const updatedNews = await prisma.news.update({

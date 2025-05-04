@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useLocation, Routes, Route, Navigate } from "react-router-dom";
-import { useAuth } from "../../contexts/AuthContext";
-import DashboardLayout from "./DashboardLayout";
+import { useAuth } from "../../../../contexts/AuthContext";
+import DashboardLayout from "../../DashboardLayout";
 import {
   FaHome,
   FaUsers,
@@ -12,10 +12,10 @@ import {
   FaPlus,
 } from "react-icons/fa";
 
-import TeamLeaderOverview from "./Sections/TeamLeader/TeamLeaderOverview";
-import TeamManagement from "./Sections/TeamLeader/TeamManagement";
-import ProjectsManagement from "./Sections/TeamLeader/ProjectsManagement";
-import Profile from "./Sections/Profile";
+import TeamLeaderOverview from "../../Sections/TeamLeader/TeamLeaderOverview";
+import TeamManagement from "../../Sections/TeamLeader/TeamManagement";
+import ProjectsManagement from "../../Sections/TeamLeader/ProjectsManagement";
+import Profile from "../../Sections/Profile";
 
 // Use the correct role type from Prisma schema
 type UserRole = "TeamLeader";
@@ -54,7 +54,7 @@ const TeamLeaderDashboard: React.FC = () => {
       permissions: ["TeamLeader"],
       subItems: [
         {
-          path: "/dashboard/TeamLeader/team",
+          path: "/dashboard/TeamLeader/teams",
           icon: <FaUsers className="nav-icon" />,
           label: "View Team",
           permissions: ["TeamLeader"],

@@ -1,16 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Building,
-  Users,
   ArrowLeft,
   Save,
   AlertCircle,
   Loader2,
 } from "lucide-react";
-import { teamsService } from "../../../services/teamsService";
-import { usersService } from "../../../services/usersService";
-import { User } from "../../../services/usersService";
+import { teamsService } from "../../../../services/teamsService";
+import { usersService } from "../../../../services/usersService";
+import { User } from "../../../../services/usersService";
 
 const AddTeam: React.FC = () => {
   const navigate = useNavigate();
@@ -116,7 +114,7 @@ const AddTeam: React.FC = () => {
         name: formData.name,
         description: formData.description,
         acro: formData.acro,
-        leaderId: formData.leaderId,
+        leaderId: parseInt(formData.leaderId),
       });
 
       // Then set the team leader (if not already set during creation)

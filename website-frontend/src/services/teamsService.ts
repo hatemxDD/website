@@ -32,6 +32,7 @@ export interface CreateTeamData {
   name: string;
   description?: string;
   acro: string;
+  leaderId: number;
 }
 
 export interface UpdateTeamData {

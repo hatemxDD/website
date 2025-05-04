@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { FaCalendarAlt, FaTag, FaSave, FaTimes } from "react-icons/fa";
-import { newsService, News } from "../../../services/newsService";
-import { useToast } from "../../../contexts/ToastContext";
+import { newsService } from "../../../../services/newsService";
+import { useToast } from "../../../../contexts/ToastContext";
 
 // Helper function to get current date in YYYY-MM-DD format
 const getCurrentDate = () => {
@@ -13,65 +13,19 @@ const getCurrentDate = () => {
   return localDate.toISOString().split("T")[0];
 };
 
-const EditNews: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+const AddNews: React.FC = () => {
   const navigate = useNavigate();
   const { showToast } = useToast();
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [isSaving, setIsSaving] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
-  const [formData, setFormData] = useState<Partial<News>>({
+  const [isLoading, setIsLoading] = useState(false);
+  const [formData, setFormData] = useState({
     title: "",
     content: "",
-    image: "",
-    category: "",
-    status: "draft",
+    category: "announcement",
     publishDate: getCurrentDate(), // Use helper function to get current date
+    status: "draft",
+    image: "",
   });
-  const [tagInput, setTagInput] = useState<string>("");
   const [imageFile, setImageFile] = useState<File | null>(null);
-
-  useEffect(() => {
-    const fetchNewsItem = async () => {
-      if (!id) return;
-
-      setIsLoading(true);
-      setError(null);
-
-      try {
-        const newsId = parseInt(id, 10);
-        if (isNaN(newsId)) {
-          throw new Error("Invalid news ID");
-        }
-
-        const newsData = await newsService.getById(newsId);
-
-        if (newsData) {
-          // Format date to YYYY-MM-DD for the date input
-          const formattedData = {
-            id: newsData.id,
-            title: newsData.title,
-            content: newsData.content || "",
-            image: newsData.image || "",
-            authorId: newsData.authorId,
-            category: newsData.category || "",
-            status: newsData.status || "draft",
-            publishDate:
-              newsData.publishDate ||
-              new Date(newsData.createdAt).toISOString().split("T")[0],
-          };
-          setFormData(formattedData);
-        }
-      } catch (err) {
-        console.error("Error fetching news item:", err);
-        setError("Failed to load news item. Please try again later.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchNewsItem();
-  }, [id]);
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -97,29 +51,15 @@ const EditNews: React.FC = () => {
     }
   };
 
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!id) return;
-
-    // Ensure publishDate is provided
-    if (!formData.publishDate) {
-      setError("Publish date is required");
-      return;
-    }
-
-    setIsSaving(true);
-    setError(null);
+    setIsLoading(true);
 
     try {
-      const newsId = parseInt(id, 10);
-      if (isNaN(newsId)) {
-        throw new Error("Invalid news ID");
-      }
-
-      // In a real implementation, you would upload the image if changed
-      let imageUrl = formData.image;
+      // In a real implementation, you would upload the image to a storage service
+      // and get back a URL to store in the database
+      // For now, we'll simulate this with a placeholder URL
+      let imageUrl = "https://placeholder.com/news-image.jpg";
 
       if (imageFile) {
         // This is where you would upload the image to your server or a cloud storage service
@@ -130,54 +70,30 @@ const EditNews: React.FC = () => {
         imageUrl = `uploaded-image-${imageFile.name}`;
       }
 
-      // Transform data to match backend expectations
-      const updateData = {
+      // Call the API to create the news
+      await newsService.create({
         title: formData.title,
-        content: formData.content,
         image: imageUrl,
+        content: formData.content,
+        publishDate: formData.publishDate,
         category: formData.category,
         status: formData.status,
-        publishDate: formData.publishDate,
-      };
+      });
 
-      await newsService.update(newsId, updateData);
-      showToast("News updated successfully", "success");
-      navigate("/dashboard/LabLeader/news");
-    } catch (err) {
-      console.error("Error updating news item:", err);
-      setError("Failed to update news item. Please try again later.");
+      showToast("News created successfully", "success");
+      navigate("/dashboard/labLeader/news");
+    } catch (error) {
+      console.error("Error creating news:", error);
+      showToast("Failed to create news. Please try again.", "error");
     } finally {
-      setIsSaving(false);
+      setIsLoading(false);
     }
   };
-
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div
-        className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative"
-        role="alert"
-      >
-        <strong className="font-bold">Error: </strong>
-        <span className="block sm:inline">{error}</span>
-      </div>
-    );
-  }
-
-  // Ensure publishDate always has a value
-  const currentPublishDate = formData.publishDate || getCurrentDate();
 
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-gray-800 dark:text-white">
-        Edit News
+        Add News
       </h2>
 
       <form
@@ -196,7 +112,7 @@ const EditNews: React.FC = () => {
               type="text"
               id="title"
               name="title"
-              value={formData.title || ""}
+              value={formData.title}
               onChange={handleChange}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
               required
@@ -213,7 +129,7 @@ const EditNews: React.FC = () => {
             <textarea
               id="content"
               name="content"
-              value={formData.content || ""}
+              value={formData.content}
               onChange={handleChange}
               rows={6}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
@@ -228,16 +144,15 @@ const EditNews: React.FC = () => {
             >
               Image
             </label>
-            <div className="flex items-center mt-1">
-              <input
-                type="file"
-                id="image"
-                name="image"
-                accept="image/*"
-                onChange={handleImageChange}
-                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-              />
-            </div>
+            <input
+              type="file"
+              id="image"
+              name="image"
+              accept="image/*"
+              onChange={handleImageChange}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              required
+            />
             {formData.image && (
               <div className="mt-2">
                 <img
@@ -264,7 +179,7 @@ const EditNews: React.FC = () => {
                 <select
                   id="category"
                   name="category"
-                  value={formData.category || ""}
+                  value={formData.category}
                   onChange={handleChange}
                   className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                   required
@@ -292,17 +207,14 @@ const EditNews: React.FC = () => {
                   type="date"
                   id="publishDate"
                   name="publishDate"
-                  value={currentPublishDate}
+                  value={formData.publishDate}
                   onChange={handleChange}
                   className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                  defaultValue={getCurrentDate()}
                   required
                 />
               </div>
             </div>
           </div>
-
-          
 
           <div>
             <label
@@ -314,7 +226,7 @@ const EditNews: React.FC = () => {
             <select
               id="status"
               name="status"
-              value={formData.status || "draft"}
+              value={formData.status}
               onChange={handleChange}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
               required
@@ -329,46 +241,18 @@ const EditNews: React.FC = () => {
           <button
             type="button"
             onClick={() => navigate("/dashboard/LabLeader/news")}
-            className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600"
+            className="flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600"
           >
-            <FaTimes className="inline-block mr-2" />
+            <FaTimes className="mr-2" />
             Cancel
           </button>
           <button
             type="submit"
-            className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-            disabled={isSaving}
+            disabled={isLoading}
+            className="flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
           >
-            {isSaving ? (
-              <>
-                <svg
-                  className="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline-block"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  ></circle>
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  ></path>
-                </svg>
-                Saving...
-              </>
-            ) : (
-              <>
-                <FaSave className="inline-block mr-2" />
-                Save Changes
-              </>
-            )}
+            <FaSave className="mr-2" />
+            {isLoading ? "Saving..." : "Save News"}
           </button>
         </div>
       </form>
@@ -376,4 +260,4 @@ const EditNews: React.FC = () => {
   );
 };
 
-export default EditNews;
+export default AddNews;

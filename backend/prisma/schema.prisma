@@ -68,7 +68,11 @@ model TeamMember {
 model News {
   id          Int       @id @default(autoincrement())
   title       String
+  content     String    @db.Text
   image       String    // URL or path to the image
+  category    String    @default("general")
+  status      String    @default("draft")
+  publishDate DateTime
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   authorId    Int
@@ -77,10 +81,11 @@ model News {
 
 model Article {
   id          Int       @id @default(autoincrement())
-  name        String
+  title        String
   content     String    @db.Text
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+  publishDate DateTime
   authorId    Int
   author      User      @relation(fields: [authorId], references: [id])
 }

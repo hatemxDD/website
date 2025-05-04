@@ -10,7 +10,6 @@ export { default as ProjectsManagement } from "./TeamLeader/ProjectsManagement";
 export { default as PublicationsManagement } from "./TeamLeader/PublicationsManagement";
 
 // Lab Leader Sections
-export { default as SeeTeams } from "./SeeTeams";
-export { default as AddTeam } from "./AddTeam";
-export { default as CreateTeam } from "./CreateTeam";
-export { default as AssignTeamLeader } from "./AssignTeamLeader";
+export { default as SeeTeams } from "./See/SeeTeams";
+export { default as AddTeam } from "./Create/AddTeam";
+export { default as CreateTeam } from "./Create/AddTeam";

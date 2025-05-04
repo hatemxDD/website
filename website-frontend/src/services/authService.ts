@@ -41,7 +41,7 @@ export const authService = {
   /**
    * Get the current logged-in user
    */
-  getCurrentUser: () => api.get<AuthUser>("/api/users/me"),
+  getCurrentUser: () => api.get<AuthUser>("/api/users/profile"),
 
   /**
    * Set authentication token for future requests

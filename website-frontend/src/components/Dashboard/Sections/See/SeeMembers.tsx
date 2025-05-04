@@ -2,8 +2,8 @@ import React, { useState, useEffect } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { FaUserPlus, FaSearch, FaFilter } from "react-icons/fa";
-import { usersService } from "../../../services/usersService";
-import { Role } from "../../../types/type";
+import { usersService } from "../../../../services/usersService";
+import { Role } from "../../../../types/type";
 
 interface Member {
   id: number;

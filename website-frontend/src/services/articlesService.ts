@@ -2,26 +2,31 @@ import { api } from "./api";
 
 export interface Article {
   id: number;
-  name: string;
+  title: string;
   content: string;
   createdAt: string;
   updatedAt: string;
+  publishDate: string;
   authorId: number;
   author?: {
     id: number;
-    name: string;
+    title: string;
     email: string;
   };
 }
 
 export interface CreateArticleData {
-  name: string;
+  title: string;
   content: string;
+  publishDate: Date;
+  authorId: number;
 }
 
 export interface UpdateArticleData {
-  name?: string;
+  title?: string;
   content?: string;
+  publishDate?: Date;
+  authorId?: number;
 }
 
 export const articlesService = {

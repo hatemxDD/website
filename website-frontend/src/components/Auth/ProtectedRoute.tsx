@@ -15,16 +15,16 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   allowedRoles,
 }) => {
   const location = useLocation();
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, isAuthenticated } = useAuth();
 
   useEffect(() => {
     console.log("ProtectedRoute - Current auth state:", {
-      isAuthenticated: !!user,
+      isAuthenticated: isAuthenticated(),
       userRole: user?.role,
       isAllowed: user ? allowedRoles.includes(user.role) : false,
       currentPath: location.pathname,
     });
-  }, [user, allowedRoles, location.pathname]);
+  }, [user, allowedRoles, location.pathname, isAuthenticated]);
 
   // Show loading state while checking authentication
   if (isLoading) {
@@ -36,7 +36,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   // Redirect to login if not authenticated
-  if (!user) {
+  if (!isAuthenticated()) {
     console.log(
       "ProtectedRoute - User not authenticated, redirecting to login"
     );
@@ -44,7 +44,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   // Redirect to home if not authorized for this route
-  if (!allowedRoles.includes(user.role)) {
+  if (user && !allowedRoles.includes(user.role)) {
     console.log(
       "ProtectedRoute - User not authorized for this route, redirecting to home"
     );

@@ -58,7 +58,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         }
       } catch (error) {
         console.error("Error loading user from token:", error);
-        authService.removeAuthToken();
+        // Only remove token if it's an authentication error (401)
+        if (
+          (error as any)?.message?.includes("401") ||
+          (error as any)?.status === 401
+        ) {
+          authService.removeAuthToken();
+        }
       } finally {
         setIsLoading(false);
       }
@@ -117,7 +123,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // Check if user is authenticated
   const isAuthenticated = () => {
-    return !!user && authService.isAuthenticated();
+    return authService.isAuthenticated();
   };
 
   const value = {

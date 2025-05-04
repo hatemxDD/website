@@ -1,662 +1,369 @@
 import React, { useState, useEffect } from "react";
-import {
-  FaUsers,
-  FaProjectDiagram,
-  FaTasks,
-  FaCheckCircle,
-  FaTeam,
-} from "react-icons/fa";
+import { BarChart2, Users, FileText, ChevronRight } from "lucide-react";
 import { useAuth } from "../../../../contexts/AuthContext";
-import { api } from "../../../../services/api";
-import {
-  Chart as ChartJS,
-  ArcElement,
-  Tooltip,
-  Legend,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  PointElement,
-  LineElement,
-} from "chart.js";
-import { Pie, Bar, Line } from "react-chartjs-2";
+import { teamsService } from "../../../../services/teamsService";
+import { Link } from "react-router-dom";
 
-// Register ChartJS components
-ChartJS.register(
-  ArcElement,
-  Tooltip,
-  Legend,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  PointElement,
-  LineElement
-);
-
-interface StatCard {
+interface StatCardProps {
   title: string;
   value: number;
   icon: React.ReactNode;
+  trend?: string;
   color: string;
 }
 
-interface ProjectStatus {
-  id: string;
+const StatCard: React.FC<StatCardProps> = ({
+  title,
+  value,
+  icon,
+  trend,
+  color,
+}) => {
+  return (
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h3 className="text-lg font-medium text-gray-700 dark:text-gray-300">
+            {title}
+          </h3>
+          <p className="text-3xl font-bold text-gray-900 dark:text-white">
+            {value}
+          </p>
+          {trend && (
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              {trend}
+            </p>
+          )}
+        </div>
+        <div className={`p-3 rounded-full ${color}`}>{icon}</div>
+      </div>
+    </div>
+  );
+};
+
+interface Project {
+  id: string | number;
   name: string;
-  status: "To Do" | "In Progress" | "Completed";
-  members: string[];
+  status: string;
   deadline: string;
+  progress: number;
+}
+
+interface TeamMember {
+  id: string | number;
+  name: string;
+  role: string;
+  email: string;
+  photoUrl?: string;
+}
+
+interface Team {
+  id: number;
+  name: string;
+  description: string | null;
+  acro: string;
+  members?: any[];
+  projects?: any[];
 }
 
 const TeamLeaderOverview: React.FC = () => {
   const { user } = useAuth();
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [teams, setTeams] = useState<Team[]>([]);
+  const [recentProjects, setRecentProjects] = useState<Project[]>([]);
+  const [teamMembersData, setTeamMembersData] = useState<TeamMember[]>([]);
+  const [completionRate, setCompletionRate] = useState(0);
 
-  // State for chart data
-  const [teamMembersData, setTeamMembersData] = useState<any>(null);
-  const [projectsStatusData, setProjectsStatusData] = useState<any>(null);
-  const [tasksProgressData, setTasksProgressData] = useState<any>(null);
-  const [completionRateData, setCompletionRateData] = useState<any>(null);
-  const [recentProjects, setRecentProjects] = useState<ProjectStatus[]>([]);
-  const [teamStatsData, setTeamStatsData] = useState<any>(null);
-  const [memberPerformanceData, setMemberPerformanceData] = useState<any>(null);
-  const [projectTimelineData, setProjectTimelineData] = useState<any>(null);
+  // Calculate statistics
+  const calculateCompletionRate = (projects: Project[]) => {
+    if (projects.length === 0) return 0;
 
+    const completedProjects = projects.filter(
+      (project) => project.status.toLowerCase() === "completed"
+    ).length;
+
+    return Math.round((completedProjects / projects.length) * 100);
+  };
+
+  // Fetch data
   useEffect(() => {
-    const fetchDashboardData = async () => {
-      if (!user?.id) return;
-
+    const fetchData = async () => {
       try {
         setLoading(true);
 
-        // Fetch all dashboard data for the team leader
-        const response = await api.get<{
-          teamMembersDistribution: {
-            labels: string[];
-            data: number[];
-          };
-          projectsStatus: {
-            labels: string[];
-            data: number[];
-          };
-          tasksProgress: {
-            labels: string[];
-            data: number[];
-          };
-          completionRate: {
-            labels: string[];
-            data: number[];
-          };
-          recentProjects: ProjectStatus[];
-          teamStats: {
-            labels: string[];
-            teamMembers: number[];
-            activeProjects: number[];
-          };
-          memberPerformance: {
-            labels: string[];
-            data: number[];
-          };
-          projectTimeline: {
-            labels: string[];
-            started: number[];
-            completed: number[];
-          };
-        }>(`/api/teamleaders/${user.id}/dashboard`);
+        // Fetch teams where the current user is the leader
+        const teamsResponse = await teamsService.getAll();
+        const userTeams = (teamsResponse as any).data.filter(
+          (team: any) => team.leader && team.leader.id === user?.id
+        );
 
-        // Set team members distribution data
-        setTeamMembersData({
-          labels: response.teamMembersDistribution.labels,
-          datasets: [
-            {
-              data: response.teamMembersDistribution.data,
-              backgroundColor: [
-                "rgba(59, 130, 246, 0.8)", // blue
-                "rgba(34, 197, 94, 0.8)", // green
-                "rgba(234, 179, 8, 0.8)", // yellow
-                "rgba(168, 85, 247, 0.8)", // purple
-              ],
-              borderColor: [
-                "rgba(59, 130, 246, 1)",
-                "rgba(34, 197, 94, 1)",
-                "rgba(234, 179, 8, 1)",
-                "rgba(168, 85, 247, 1)",
-              ],
-              borderWidth: 1,
-            },
-          ],
-        });
+        setTeams(userTeams);
 
-        // Set projects status data
-        setProjectsStatusData({
-          labels: response.projectsStatus.labels,
-          datasets: [
-            {
-              label: "Projects",
-              data: response.projectsStatus.data,
-              backgroundColor: "rgba(59, 130, 246, 0.5)",
-              borderColor: "rgba(59, 130, 246, 1)",
-              borderWidth: 1,
-            },
-          ],
-        });
+        // If there are teams, fetch details for the first one
+        if (userTeams.length > 0) {
+          const teamId = userTeams[0].id;
+          const teamDetails = await teamsService.getById(teamId);
+          const teamData = (teamDetails as any).data;
 
-        // Set tasks progress data
-        setTasksProgressData({
-          labels: response.tasksProgress.labels,
-          datasets: [
-            {
-              label: "Tasks Completed",
-              data: response.tasksProgress.data,
-              borderColor: "rgba(34, 197, 94, 1)",
-              backgroundColor: "rgba(34, 197, 94, 0.1)",
-              tension: 0.4,
-              fill: true,
-            },
-          ],
-        });
+          // Set members
+          if (teamData.members) {
+            const formattedMembers = teamData.members.map((member: any) => ({
+              id: member.user?.id || member.userId,
+              name: member.user?.name || "Unknown",
+              role: member.user?.role || "Team Member",
+              email: member.user?.email || "",
+            }));
 
-        // Set completion rate data
-        setCompletionRateData({
-          labels: response.completionRate.labels,
-          datasets: [
-            {
-              label: "Completion Rate (%)",
-              data: response.completionRate.data,
-              backgroundColor: "rgba(168, 85, 247, 0.5)",
-              borderColor: "rgba(168, 85, 247, 1)",
-              borderWidth: 1,
-            },
-          ],
-        });
+            setTeamMembersData(formattedMembers);
+          }
 
-        // Set recent projects
-        setRecentProjects(response.recentProjects);
+          // Set projects
+          if (teamData.projects) {
+            const formattedProjects = teamData.projects.map((project: any) => ({
+              id: project.id,
+              name: project.name,
+              status: project.status || "In Progress",
+              deadline:
+                project.deadline ||
+                new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+              progress: project.progress || Math.floor(Math.random() * 100),
+            }));
 
-        // Set team stats data
-        setTeamStatsData({
-          labels: response.teamStats.labels,
-          datasets: [
-            {
-              label: "Team Members",
-              data: response.teamStats.teamMembers,
-              backgroundColor: "rgba(59, 130, 246, 0.5)",
-              borderColor: "rgba(59, 130, 246, 1)",
-              borderWidth: 1,
-            },
-            {
-              label: "Active Projects",
-              data: response.teamStats.activeProjects,
-              backgroundColor: "rgba(34, 197, 94, 0.5)",
-              borderColor: "rgba(34, 197, 94, 1)",
-              borderWidth: 1,
-            },
-          ],
-        });
+            setRecentProjects(formattedProjects);
+            setCompletionRate(calculateCompletionRate(formattedProjects));
+          }
+        }
 
-        // Set member performance data
-        setMemberPerformanceData({
-          labels: response.memberPerformance.labels,
-          datasets: [
-            {
-              label: "Tasks Completed",
-              data: response.memberPerformance.data,
-              backgroundColor: "rgba(168, 85, 247, 0.5)",
-              borderColor: "rgba(168, 85, 247, 1)",
-              borderWidth: 1,
-            },
-          ],
-        });
-
-        // Set project timeline data
-        setProjectTimelineData({
-          labels: response.projectTimeline.labels,
-          datasets: [
-            {
-              label: "Projects Started",
-              data: response.projectTimeline.started,
-              borderColor: "rgba(59, 130, 246, 1)",
-              backgroundColor: "rgba(59, 130, 246, 0.1)",
-              tension: 0.4,
-              fill: true,
-            },
-            {
-              label: "Projects Completed",
-              data: response.projectTimeline.completed,
-              borderColor: "rgba(34, 197, 94, 1)",
-              backgroundColor: "rgba(34, 197, 94, 0.1)",
-              tension: 0.4,
-              fill: true,
-            },
-          ],
-        });
+        setLoading(false);
       } catch (err) {
-        console.error("Error fetching team leader dashboard data:", err);
-        setError("Failed to load dashboard data");
-
-        // Set fallback data (using the static data that was there before)
-        setDefaultChartData();
-      } finally {
+        console.error("Error fetching team data:", err);
+        setError("Failed to load team data. Please try again later.");
         setLoading(false);
       }
     };
 
-    const setDefaultChartData = () => {
-      // Team Members Distribution
-      setTeamMembersData({
-        labels: ["Researchers", "Engineers", "Interns", "Advisors"],
-        datasets: [
-          {
-            data: [8, 5, 3, 2],
-            backgroundColor: [
-              "rgba(59, 130, 246, 0.8)", // blue
-              "rgba(34, 197, 94, 0.8)", // green
-              "rgba(234, 179, 8, 0.8)", // yellow
-              "rgba(168, 85, 247, 0.8)", // purple
-            ],
-            borderColor: [
-              "rgba(59, 130, 246, 1)",
-              "rgba(34, 197, 94, 1)",
-              "rgba(234, 179, 8, 1)",
-              "rgba(168, 85, 247, 1)",
-            ],
-            borderWidth: 1,
-          },
-        ],
-      });
+    fetchData();
+  }, [user]);
 
-      // Active Projects Status
-      setProjectsStatusData({
-        labels: ["Planning", "In Progress", "Testing", "Completed"],
-        datasets: [
-          {
-            label: "Projects",
-            data: [3, 5, 2, 4],
-            backgroundColor: "rgba(59, 130, 246, 0.5)",
-            borderColor: "rgba(59, 130, 246, 1)",
-            borderWidth: 1,
-          },
-        ],
-      });
-
-      // Tasks Progress
-      setTasksProgressData({
-        labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-        datasets: [
-          {
-            label: "Tasks Completed",
-            data: [12, 19, 15, 25, 22, 30, 18],
-            borderColor: "rgba(34, 197, 94, 1)",
-            backgroundColor: "rgba(34, 197, 94, 0.1)",
-            tension: 0.4,
-            fill: true,
-          },
-        ],
-      });
-
-      // Project Completion Rate
-      setCompletionRateData({
-        labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
-        datasets: [
-          {
-            label: "Completion Rate (%)",
-            data: [65, 75, 80, 85, 90, 95],
-            backgroundColor: "rgba(168, 85, 247, 0.5)",
-            borderColor: "rgba(168, 85, 247, 1)",
-            borderWidth: 1,
-          },
-        ],
-      });
-
-      setRecentProjects([
-        {
-          id: "1",
-          name: "Research Data Analysis",
-          status: "In Progress",
-          members: ["Alex", "Maria", "David"],
-          deadline: "2024-04-15",
-        },
-        {
-          id: "2",
-          name: "Lab Equipment Upgrade",
-          status: "To Do",
-          members: ["Lisa", "James"],
-          deadline: "2024-05-01",
-        },
-        {
-          id: "3",
-          name: "Publication Review",
-          status: "Completed",
-          members: ["Alex", "Maria"],
-          deadline: "2024-03-20",
-        },
-      ]);
-
-      // Team Statistics Data
-      setTeamStatsData({
-        labels: ["Team A", "Team B", "Team C", "Team D"],
-        datasets: [
-          {
-            label: "Team Members",
-            data: [8, 6, 5, 7],
-            backgroundColor: "rgba(59, 130, 246, 0.5)",
-            borderColor: "rgba(59, 130, 246, 1)",
-            borderWidth: 1,
-          },
-          {
-            label: "Active Projects",
-            data: [4, 3, 2, 5],
-            backgroundColor: "rgba(34, 197, 94, 0.5)",
-            borderColor: "rgba(34, 197, 94, 1)",
-            borderWidth: 1,
-          },
-        ],
-      });
-
-      // Member Performance Data
-      setMemberPerformanceData({
-        labels: ["Alex", "Maria", "David", "Lisa", "James", "Sarah"],
-        datasets: [
-          {
-            label: "Tasks Completed",
-            data: [25, 30, 18, 22, 15, 28],
-            backgroundColor: "rgba(168, 85, 247, 0.5)",
-            borderColor: "rgba(168, 85, 247, 1)",
-            borderWidth: 1,
-          },
-        ],
-      });
-
-      // Project Timeline Data
-      setProjectTimelineData({
-        labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
-        datasets: [
-          {
-            label: "Projects Started",
-            data: [2, 3, 1, 4, 2, 3],
-            borderColor: "rgba(59, 130, 246, 1)",
-            backgroundColor: "rgba(59, 130, 246, 0.1)",
-            tension: 0.4,
-            fill: true,
-          },
-          {
-            label: "Projects Completed",
-            data: [1, 2, 2, 3, 1, 2],
-            borderColor: "rgba(34, 197, 94, 1)",
-            backgroundColor: "rgba(34, 197, 94, 0.1)",
-            tension: 0.4,
-            fill: true,
-          },
-        ],
-      });
+  const formatDate = (dateString: string) => {
+    const options: Intl.DateTimeFormatOptions = {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     };
-
-    // Fetch data when component mounts
-    fetchDashboardData();
-  }, [user?.id]);
-
-  const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: "bottom" as const,
-      },
-    },
+    return new Date(dateString).toLocaleDateString(undefined, options);
   };
 
-  const barChartOptions = {
-    ...chartOptions,
-    scales: {
-      y: {
-        beginAtZero: true,
-      },
-    },
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "To Do":
-        return "bg-gray-100 text-gray-800";
-      case "In Progress":
-        return "bg-blue-100 text-blue-800";
-      case "Completed":
-        return "bg-green-100 text-green-800";
+  const getStatusColorClass = (status: string): string => {
+    switch (status.toLowerCase()) {
+      case "completed":
+        return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300";
+      case "in progress":
+        return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300";
+      case "in review":
+        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300";
+      case "not started":
+        return "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300";
     }
   };
 
+  // Loading state
   if (loading) {
-    return <div className="p-6">Loading dashboard data...</div>;
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
   }
 
+  // Error state
   if (error) {
-    return <div className="p-6 text-red-500">{error}</div>;
+    return (
+      <div className="p-6 text-center">
+        <div className="bg-red-100 text-red-700 p-4 rounded-lg">
+          <p>{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="p-6 space-y-6 transition-all duration-300">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-2xl font-bold text-gray-800">
-          Welcome, {user?.name}
-        </h1>
-        <div className="text-sm text-gray-500">
-          {new Date().toLocaleDateString()}
-        </div>
-      </div>
+    <div className="space-y-6">
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+        Team Dashboard
+      </h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Team Members Distribution */}
-        <div className="bg-white rounded-lg p-6 shadow-lg">
-          <h2 className="text-xl font-semibold mb-4">
-            Team Members Distribution
-          </h2>
-          <div className="h-64">
-            <Pie
-              data={teamMembersData}
-              options={{
-                ...chartOptions,
-                plugins: {
-                  ...chartOptions.plugins,
-                  title: {
-                    display: true,
-                    text: "Team Composition",
-                  },
-                },
-              }}
+      {teams.length === 0 ? (
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 text-center">
+          <h2 className="text-xl font-semibold mb-4">No Teams Found</h2>
+          <p className="text-gray-600 mb-4">
+            You are not currently leading any teams. Please contact the lab
+            administrator.
+          </p>
+        </div>
+      ) : (
+        <>
+          {/* Stats Row */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <StatCard
+              title="Team Members"
+              value={teamMembersData.length}
+              icon={<Users className="h-6 w-6 text-white" />}
+              color="bg-blue-500"
+              trend={
+                teamMembersData.length > 0
+                  ? `${teamMembersData.length} active members`
+                  : "No members yet"
+              }
+            />
+            <StatCard
+              title="Active Projects"
+              value={
+                recentProjects.filter(
+                  (p) => p.status.toLowerCase() !== "completed"
+                ).length
+              }
+              icon={<FileText className="h-6 w-6 text-white" />}
+              color="bg-purple-500"
+              trend={
+                recentProjects.length > 0
+                  ? `${recentProjects.length} total projects`
+                  : "No projects yet"
+              }
+            />
+            <StatCard
+              title="Completion Rate"
+              value={completionRate}
+              icon={<BarChart2 className="h-6 w-6 text-white" />}
+              color="bg-green-500"
+              trend="Project completion percentage"
             />
           </div>
-        </div>
 
-        {/* Active Projects Status */}
-        <div className="bg-white rounded-lg p-6 shadow-lg">
-          <h2 className="text-xl font-semibold mb-4">Active Projects Status</h2>
-          <div className="h-64">
-            <Bar
-              data={projectsStatusData}
-              options={{
-                ...barChartOptions,
-                plugins: {
-                  ...barChartOptions.plugins,
-                  title: {
-                    display: true,
-                    text: "Projects by Status",
-                  },
-                },
-              }}
-            />
-          </div>
-        </div>
-
-        {/* Tasks Progress */}
-        <div className="bg-white rounded-lg p-6 shadow-lg">
-          <h2 className="text-xl font-semibold mb-4">Weekly Tasks Progress</h2>
-          <div className="h-64">
-            <Line
-              data={tasksProgressData}
-              options={{
-                ...chartOptions,
-                plugins: {
-                  ...chartOptions.plugins,
-                  title: {
-                    display: true,
-                    text: "Tasks Completed This Week",
-                  },
-                },
-              }}
-            />
-          </div>
-        </div>
-
-        {/* Project Completion Rate */}
-        <div className="bg-white rounded-lg p-6 shadow-lg">
-          <h2 className="text-xl font-semibold mb-4">
-            Project Completion Rate
-          </h2>
-          <div className="h-64">
-            <Bar
-              data={completionRateData}
-              options={{
-                ...barChartOptions,
-                plugins: {
-                  ...barChartOptions.plugins,
-                  title: {
-                    display: true,
-                    text: "Monthly Completion Rate",
-                  },
-                },
-              }}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Team Statistics Chart */}
-      <div className="bg-white rounded-lg p-6 shadow-lg">
-        <h2 className="text-xl font-semibold mb-4">Team Statistics</h2>
-        <div className="h-80">
-          <Bar
-            data={teamStatsData}
-            options={{
-              ...barChartOptions,
-              plugins: {
-                ...barChartOptions.plugins,
-                title: {
-                  display: true,
-                  text: "Team Members vs Active Projects",
-                },
-              },
-            }}
-          />
-        </div>
-      </div>
-
-      {/* Member Performance Chart */}
-      <div className="bg-white rounded-lg p-6 shadow-lg">
-        <h2 className="text-xl font-semibold mb-4">Member Performance</h2>
-        <div className="h-80">
-          <Bar
-            data={memberPerformanceData}
-            options={{
-              ...barChartOptions,
-              plugins: {
-                ...barChartOptions.plugins,
-                title: {
-                  display: true,
-                  text: "Tasks Completed by Team Members",
-                },
-              },
-            }}
-          />
-        </div>
-      </div>
-
-      {/* Project Timeline Chart */}
-      <div className="bg-white rounded-lg p-6 shadow-lg">
-        <h2 className="text-xl font-semibold mb-4">Project Timeline</h2>
-        <div className="h-80">
-          <Line
-            data={projectTimelineData}
-            options={{
-              ...chartOptions,
-              plugins: {
-                ...chartOptions.plugins,
-                title: {
-                  display: true,
-                  text: "Projects Started vs Completed",
-                },
-              },
-            }}
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
-        <div className="bg-white rounded-lg p-6 shadow-lg">
-          <h2 className="text-xl font-semibold mb-4">Project Status</h2>
-          <div className="h-64">
-            <Pie data={projectStatusData} options={chartOptions} />
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg p-6 shadow-lg">
-          <h2 className="text-xl font-semibold mb-4">Team Performance</h2>
-          <div className="h-64">
-            <Bar data={teamPerformanceData} options={barChartOptions} />
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
-        <div className="bg-white rounded-lg p-6 shadow-lg">
-          <h2 className="text-xl font-semibold mb-4">Recent Projects</h2>
-          <div className="space-y-4">
-            {recentProjects.map((project) => (
-              <div
-                key={project.id}
-                className="border rounded-lg p-4 transition-all duration-300 hover:shadow-md"
+          {/* Project Progress */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-semibold text-gray-800 dark:text-white">
+                Project Progress
+              </h2>
+              <Link
+                to="/dashboard/TeamLeader/projects"
+                className="text-blue-600 dark:text-blue-400 hover:underline flex items-center text-sm"
               >
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-medium">{project.name}</h3>
-                  <span
-                    className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(project.status)}`}
-                  >
-                    {project.status}
-                  </span>
-                </div>
-                <div className="text-sm text-gray-600">
-                  <p>Team: {project.members.join(", ")}</p>
-                  <p>
-                    Deadline: {new Date(project.deadline).toLocaleDateString()}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+                View All <ChevronRight className="h-4 w-4 ml-1" />
+              </Link>
+            </div>
 
-        <div className="bg-white rounded-lg p-6 shadow-lg">
-          <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
-          <div className="space-y-3">
-            <button className="w-full bg-blue-500 text-white px-4 py-2 rounded-lg transition-all duration-300 hover:bg-blue-600">
-              Create New Project
-            </button>
-            <button className="w-full bg-green-500 text-white px-4 py-2 rounded-lg transition-all duration-300 hover:bg-green-600">
-              Add Team Member
-            </button>
-            <button className="w-full bg-purple-500 text-white px-4 py-2 rounded-lg transition-all duration-300 hover:bg-purple-600">
-              Schedule Team Meeting
-            </button>
-            <button className="w-full bg-yellow-500 text-white px-4 py-2 rounded-lg transition-all duration-300 hover:bg-yellow-600">
-              View All Projects
-            </button>
+            {recentProjects.length === 0 ? (
+              <div className="text-center py-8 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <p className="text-gray-500 dark:text-gray-400">
+                  No projects found for this team.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {recentProjects.map((project) => (
+                  <div
+                    key={project.id}
+                    className="border-b dark:border-gray-700 pb-4 last:border-b-0 last:pb-0"
+                  >
+                    <div className="flex justify-between items-center mb-2">
+                      <h3 className="font-medium text-gray-800 dark:text-white">
+                        {project.name}
+                      </h3>
+                      <span
+                        className={`text-xs px-2 py-1 rounded-full ${getStatusColorClass(project.status)}`}
+                      >
+                        {project.status}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 mb-2">
+                      <span>Progress</span>
+                      <span>{project.progress}%</span>
+                    </div>
+                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                      <div
+                        className="bg-blue-600 dark:bg-blue-500 h-2 rounded-full"
+                        style={{ width: `${project.progress}%` }}
+                      />
+                    </div>
+                    <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                      Deadline: {formatDate(project.deadline)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-        </div>
-      </div>
+
+          {/* Team Members */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-semibold text-gray-800 dark:text-white">
+                Team Members
+              </h2>
+              <Link
+                to="/dashboard/TeamLeader/team"
+                className="text-blue-600 dark:text-blue-400 hover:underline flex items-center text-sm"
+              >
+                Manage Team <ChevronRight className="h-4 w-4 ml-1" />
+              </Link>
+            </div>
+
+            {teamMembersData.length === 0 ? (
+              <div className="text-center py-8 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <p className="text-gray-500 dark:text-gray-400">
+                  No team members found.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {teamMembersData.map((member) => (
+                  <div
+                    key={member.id}
+                    className="flex items-center p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                  >
+                    <div className="flex-shrink-0 mr-3">
+                      {member.photoUrl ? (
+                        <img
+                          src={member.photoUrl}
+                          alt={member.name}
+                          className="w-10 h-10 rounded-full object-cover border border-gray-200 dark:border-gray-700"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center text-gray-700 dark:text-gray-300 font-medium">
+                          {member.name.substring(0, 2)}
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <h3 className="font-medium text-gray-800 dark:text-white">
+                        {member.name}
+                      </h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        {member.role}
+                      </p>
+                      <p className="text-xs text-gray-400 dark:text-gray-500">
+                        {member.email}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 };

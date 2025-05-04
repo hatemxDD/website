@@ -4,6 +4,7 @@ export interface News {
   id: number;
   title: string;
   image: string;
+  content: string;
   createdAt: string;
   updatedAt: string;
   authorId: number;
@@ -12,16 +13,27 @@ export interface News {
     name: string;
     email: string;
   };
+  category?: string;
+  status?: string;
+  publishDate?: string;
 }
 
 export interface CreateNewsData {
   title: string;
   image: string;
+  content?: string;
+  category?: string;
+  status?: string;
+  publishDate?: string;
 }
 
 export interface UpdateNewsData {
   title?: string;
   image?: string;
+  content?: string;
+  category?: string;
+  status?: string;
+  publishDate?: string;
 }
 
 export const newsService = {

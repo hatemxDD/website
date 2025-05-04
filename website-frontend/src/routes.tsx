@@ -20,19 +20,22 @@ import ProfileWrapper from "./components/User/ProfileWrapper";
 
 // Import dashboard components
 import LabLeaderDashboard from "./components/Dashboard/LabLeaderDashboard";
-import TeamLeaderDashboard from "./components/Dashboard/TeamLeaderDashboard";
-import MemberDashboard from "./components/Dashboard/MemberDashboard";
+import TeamLeaderDashboard from "./components/Dashboard/Sections/TeamLeader/TeamLeaderDashboard";
+import MemberDashboard from "./components/Dashboard/Sections/Member/MemberDashboard";
 
 // Import dashboard sections
 import DashboardOverview from "./components/Dashboard/Sections/DashboardOverview";
-import SeeMembers from "./components/Dashboard/Sections/SeeMembers";
-import AddMember from "./components/Dashboard/Sections/AddMember";
-import LabLeaderProjects from "./components/Dashboard/Sections/SeeProjects";
+import SeeMembers from "./components/Dashboard/Sections/See/SeeMembers";
+import AddMember from "./components/Dashboard/Sections/Create/AddMember";
+import LabLeaderProjects from "./components/Dashboard/Sections/See/SeeProjects";
 import LabLeaderPublications from "./components/Dashboard/Sections/PublicationsManagement";
 import Settings from "./components/Dashboard/Sections/Settings";
-import SeeNews from "./components/Dashboard/Sections/SeeNews";
-import AddNews from "./components/Dashboard/Sections/AddNews";
+import SeeNews from "./components/Dashboard/Sections/See/SeeNews";
+import AddNews from "./components/Dashboard/Sections/Create/AddNews";
 import Profile from "./components/Dashboard/Sections/Profile";
+import EditNews from "./components/Dashboard/Sections/EditNews";
+import SeeArticle from "./components/Dashboard/Sections/See/SeeArticle";
+import AddArticle from "./components/Dashboard/Sections/Create/AddArticle";
 
 // Import team leader sections
 import TeamLeaderOverview from "./components/Dashboard/Sections/TeamLeader/TeamLeaderOverview";
@@ -41,14 +44,12 @@ import ProjectsManagement from "./components/Dashboard/Sections/TeamLeader/Proje
 import PublicationsManagement from "./components/Dashboard/Sections/TeamLeader/PublicationsManagement";
 
 // Import Member sections
-import MemberOverview from "./components/Dashboard/Sections/Member/MemberOverview";
+import MemberOverview from "./components/Dashboard/Sections/MemberOverview";
 import MemberProjects from "./components/Dashboard/Sections/Member/MemberProjects";
 
 // Import new components
-import SeeTeams from "./components/Dashboard/Sections/SeeTeams";
-import CreateTeam from "./components/Dashboard/Sections/CreateTeam";
-import AddTeam from "./components/Dashboard/Sections/AddTeam";
-import AssignTeamLeader from "./components/Dashboard/Sections/AssignTeamLeader";
+import SeeTeams from "./components/Dashboard/Sections/See/SeeTeams";
+import AddTeam from "./components/Dashboard/Sections/Create/AddTeam";
 
 // Role type from Prisma schema
 type UserRole = "LabLeader" | "TeamLeader" | "TeamMember";
@@ -111,8 +112,8 @@ const AppRoutes = () => {
       <Route path="/projects/:id" element={<ProjectDetails />} />
 
       {/* Publications Routes */}
-      <Route path="/publications" element={<Publications />} />
-      <Route path="/publications/:id" element={<ArticleDetails />} />
+      <Route path="/articles" element={<SeeArticle />} />
+      <Route path="/articles/:id" element={<ArticleDetails />} />
 
       {/* Profile Route */}
       <Route path="/profile" element={<ProfileWrapper />} />
@@ -135,16 +136,19 @@ const AppRoutes = () => {
         <Route path="teams" element={<SeeTeams />} />
         <Route path="teams/add" element={<AddTeam />} />
         <Route path="teams/edit/:id" element={<SeeTeams />} />
-        <Route path="teams/assign-leader/:id" element={<AssignTeamLeader />} />
         <Route path="teams/remove/:id" element={<SeeTeams />} />
         <Route path="projects" element={<LabLeaderProjects />} />
         <Route path="projects/add" element={<LabLeaderProjects />} />
         <Route path="projects/tasks" element={<LabLeaderProjects />} />
         <Route path="projects/timeline" element={<LabLeaderProjects />} />
+        <Route path="articles" element={<SeeArticle />} />
+        <Route path="articles/add" element={<AddArticle />} />
+        <Route path="articles/edit/:id" element={<AddArticle />} />
         <Route path="publications" element={<LabLeaderPublications />} />
         <Route path="publications/add" element={<LabLeaderPublications />} />
         <Route path="news" element={<SeeNews />} />
         <Route path="news/add" element={<AddNews />} />
+        <Route path="news/edit/:id" element={<EditNews />} />
         <Route path="settings" element={<Settings />} />
         <Route path="profile" element={<Profile />} />
         <Route path="*" element={<Navigate to="overview" replace />} />

@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
+import React, { useState, useEffect } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../../contexts/AuthContext";
 import {
   FaMoon,
   FaSun,
@@ -10,7 +10,7 @@ import {
   FaChevronDown,
   FaBell,
   FaCog,
-} from 'react-icons/fa';
+} from "react-icons/fa";
 
 interface MenuItem {
   id: string;
@@ -36,7 +36,7 @@ interface DashboardLayoutProps {
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   children,
   menuItems,
-  setActiveSection
+  setActiveSection,
 }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -55,14 +55,14 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       }
     };
 
-    window.addEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
     handleResize();
-    return () => window.removeEventListener('resize', handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   const toggleSubmenu = (id: string) => {
-    setExpandedMenus(prev =>
-      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    setExpandedMenus((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
     );
   };
 
@@ -76,12 +76,12 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <div className={`min-h-screen ${isDarkMode ? 'dark' : ''}`}>
+    <div className={`min-h-screen ${isDarkMode ? "dark" : ""}`}>
       <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
         {/* Sidebar */}
         <aside
           className={`fixed inset-y-0 left-0 z-50 w-64 transform transition-transform duration-300 ease-in-out
-            ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+            ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
             bg-gradient-to-b from-blue-900 to-blue-800 text-white shadow-xl`}
         >
           {/* Logo and Brand */}
@@ -96,11 +96,13 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           <div className="p-4 border-b border-blue-700">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 rounded-full bg-blue-700 flex items-center justify-center">
-                <span className="text-lg font-semibold">{user?.name?.[0] || 'U'}</span>
+                <span className="text-lg font-semibold">
+                  {user?.name?.[0] || "U"}
+                </span>
               </div>
               <div>
-                <h3 className="font-medium">{user?.name || 'User'}</h3>
-                <p className="text-sm text-blue-200">Lab Leader</p>
+                <h3 className="font-medium">{user?.name || "User"}</h3>
+                <p className="text-sm text-blue-200">{user?.role || "User"}</p>
               </div>
             </div>
           </div>
@@ -111,11 +113,19 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
               {menuItems.map((item) => (
                 <div key={item.id}>
                   <button
-                    onClick={() => item.subItems ? toggleSubmenu(item.id) : handleMenuClick(item)}
+                    onClick={() =>
+                      item.subItems
+                        ? toggleSubmenu(item.id)
+                        : handleMenuClick(item)
+                    }
                     className={`w-full flex items-center justify-between px-4 py-3 text-sm rounded-lg transition-colors duration-200
-                      ${isActive(item.path)
-                        ? 'bg-blue-700 text-white'
-                        : 'text-blue-100 hover:bg-blue-700/50'}`}
+                      ${
+                        item.path
+                          ? isActive(item.path)
+                          : false
+                            ? "bg-blue-700 text-white"
+                            : "text-blue-100 hover:bg-blue-700/50"
+                      }`}
                   >
                     <div className="flex items-center space-x-3">
                       <span className="text-xl">{item.icon}</span>
@@ -124,7 +134,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                     {item.subItems && (
                       <FaChevronDown
                         className={`w-4 h-4 transform transition-transform duration-200
-                          ${expandedMenus.includes(item.id) ? 'rotate-180' : ''}`}
+                          ${expandedMenus.includes(item.id) ? "rotate-180" : ""}`}
                       />
                     )}
                   </button>
@@ -137,9 +147,11 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                           key={subItem.path}
                           to={subItem.path}
                           className={`flex items-center px-4 py-2 text-sm rounded-lg transition-colors duration-200
-                            ${isActive(subItem.path)
-                              ? 'bg-blue-700 text-white'
-                              : 'text-blue-100 hover:bg-blue-700/50'}`}
+                            ${
+                              isActive(subItem.path)
+                                ? "bg-blue-700 text-white"
+                                : "text-blue-100 hover:bg-blue-700/50"
+                            }`}
                         >
                           <span className="mr-3">{subItem.icon}</span>
                           {subItem.label}
@@ -159,7 +171,11 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                 onClick={() => setIsDarkMode(!isDarkMode)}
                 className="p-2 rounded-lg hover:bg-blue-700/50 transition-colors duration-200"
               >
-                {isDarkMode ? <FaSun className="w-5 h-5" /> : <FaMoon className="w-5 h-5" />}
+                {isDarkMode ? (
+                  <FaSun className="w-5 h-5" />
+                ) : (
+                  <FaMoon className="w-5 h-5" />
+                )}
               </button>
               <button
                 onClick={logout}
@@ -173,7 +189,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         </aside>
 
         {/* Main Content */}
-        <main className={`flex-1 transition-all duration-300 ease-in-out ${isSidebarOpen ? 'ml-64' : 'ml-0'}`}>
+        <main
+          className={`flex-1 transition-all duration-300 ease-in-out ${isSidebarOpen ? "ml-64" : "ml-0"}`}
+        >
           {/* Header */}
           <header className="bg-white dark:bg-gray-800 shadow-sm">
             <div className="flex items-center justify-between px-6 py-4">
@@ -187,7 +205,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                   <FaBars className="w-6 h-6 text-gray-600 dark:text-gray-300" />
                 )}
               </button>
-              
+
               <div className="flex items-center space-x-4">
                 <button className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
                   <FaBell className="w-6 h-6 text-gray-600 dark:text-gray-300" />
@@ -209,4 +227,4 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   );
 };
 
-export default DashboardLayout; 
+export default DashboardLayout;

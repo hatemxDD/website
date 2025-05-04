@@ -95,6 +95,25 @@ const LabLeaderDashboard: React.FC = () => {
       ],
     },
     {
+      id: "Article",
+      icon: <FaNewspaper className="w-5 h-5" />,
+      label: "Article",
+      submenu: [
+        {
+          id: "see-articles",
+          label: "See article",
+          path: "/dashboard/LabLeader/articles",
+          icon: <FaBell className="w-4 h-4" />,
+        },
+        {
+          id: "add-article",
+          label: "Add article",
+          path: "/dashboard/LabLeader/articles/add",
+          icon: <FaPlus className="w-4 h-4" />,
+        },
+      ],
+    },
+    {
       id: "profile",
       icon: <FaUser className="w-5 h-5" />,
       label: "Profile",

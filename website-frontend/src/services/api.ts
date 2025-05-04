@@ -28,14 +28,17 @@ export const api = {
     const token = getAuthToken();
 
     // Add headers to the request
-    const headers: HeadersInit = {
+    let headers: HeadersInit = {
       "Content-Type": "application/json",
       ...options.headers,
     };
 
     // Add authorization header if token exists
     if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
+      headers = {
+        ...headers,
+        Authorization: `Bearer ${token}`,
+      };
     }
 
     const response = await fetch(url, {

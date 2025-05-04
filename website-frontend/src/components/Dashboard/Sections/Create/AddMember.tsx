@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   FaUser,
@@ -10,8 +10,8 @@ import {
   FaTimes,
   FaUserTag,
 } from "react-icons/fa";
-import { usersService, CreateUserData } from "../../../services/usersService";
-import { Role } from "../../../types/type";
+import { usersService, CreateUserData } from "./../../../../services/usersService";
+import { Role } from "../../../../types/type";
 
 interface MemberFormData {
   email: string;

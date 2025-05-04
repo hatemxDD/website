@@ -1,13 +1,13 @@
 import React, { useState } from "react";
 import { useLocation, Routes, Route, Navigate } from "react-router-dom";
-import { useAuth } from "../../contexts/AuthContext";
-import DashboardLayout from "./DashboardLayout";
+import { useAuth } from "../../../../contexts/AuthContext";
+import DashboardLayout from "../../DashboardLayout";
 import { FaHome, FaProjectDiagram, FaBook, FaUser } from "react-icons/fa";
-import MemberOverview from "./Sections/Member/MemberOverview";
-import MemberProjects from "./Sections/Member/MemberProjects";
-import Profile from "./Sections/Profile";
-import SeeNews from "./Sections/SeeNews";
-import Publications from "../Publications/Publications";
+import MemberOverview from "../../Sections/Member/MemberOverview";
+import MemberProjects from "../../Sections/Member/MemberProjects";
+import Profile from "../../Sections/Profile";
+import SeeNews from "../../Sections/See/SeeNews";
+import Publications from "../../../Publications/Publications";
 
 // Use the correct role type from Prisma schema
 type UserRole = "TeamMember";

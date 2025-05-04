@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { FaPlus, FaSearch, FaFilter, FaUsers } from "react-icons/fa";
-import { teamsService } from "../../../services/teamsService";
+import { teamsService } from "../../../../services/teamsService";
 
 interface Team {
   id: number;
