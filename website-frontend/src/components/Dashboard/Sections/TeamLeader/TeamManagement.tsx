@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
 import {
-  FaUserPlus,
   FaEdit,
   FaTrash,
-  FaPlus,
-  FaChartBar,
+  FaSave,
+  FaTimes,
 } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 import {
   teamsService,
   Team,
@@ -22,15 +22,6 @@ interface TeamMember {
   status: "active" | "inactive";
 }
 
-interface LabMember {
-  id: string;
-  name: string;
-  role: string;
-  email: string;
-  joinDate: string;
-  teamId?: string; // If null/undefined, means the member is not assigned to any team
-}
-
 // Extended Team interface with additional properties returned from API
 interface ExtendedTeam extends Team {
   members?: any[];
@@ -41,34 +32,60 @@ interface TeamManagementProps {
   mode?: "view" | "add";
 }
 
+// Add this interface to handle the MyTeams response format
+interface MyTeamsResponse {
+  led?: Team[];
+  member?: Team[];
+}
+
 const TeamManagement: React.FC<TeamManagementProps> = ({ mode = "view" }) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   // State for teams and members
   const [teams, setTeams] = useState<ExtendedTeam[]>([]);
   const [selectedTeam, setSelectedTeam] = useState<ExtendedTeam | null>(null);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
-  const [unassignedMembers, setUnassignedMembers] = useState<LabMember[]>([]);
-  const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  // Edit team states
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedTeam, setEditedTeam] = useState<{
+    name: string;
+    description: string;
+    acro: string;
+  }>({
+    name: "",
+    description: "",
+    acro: "",
+  });
 
   // Fetch user's teams
   useEffect(() => {
     const fetchTeams = async () => {
       try {
         setLoading(true);
-        const response = await teamsService.getAll();
         // Filter teams where user is the leader
-        const leaderTeams = (response as any).data.filter(
-          (team: ExtendedTeam) => team.leader && team.leader.id === user?.id
-        );
+        const leaderTeams = (await teamsService.getMyTeams()) as
+          | Team[]
+          | MyTeamsResponse;
 
-        setTeams(leaderTeams);
+        // Since the API returns both led and member teams, extract just the led ones
+        const myTeams = Array.isArray(leaderTeams)
+          ? leaderTeams
+          : leaderTeams.led || [];
+
+        setTeams(myTeams);
 
         // Set first team as selected by default if available
-        if (leaderTeams.length > 0) {
-          setSelectedTeam(leaderTeams[0]);
+        if (myTeams.length > 0) {
+          setSelectedTeam(myTeams[0]);
+          setEditedTeam({
+            name: myTeams[0].name,
+            description: myTeams[0].description || "",
+            acro: myTeams[0].acro,
+          });
         }
 
         setLoading(false);
@@ -90,7 +107,13 @@ const TeamManagement: React.FC<TeamManagementProps> = ({ mode = "view" }) => {
       try {
         setLoading(true);
         const response = await teamsService.getById(selectedTeam.id);
-        const teamData = (response as any).data as ExtendedTeam;
+
+        // Handle both response formats and type the result
+        const teamData = (
+          response && typeof response === "object" && "data" in response
+            ? response.data
+            : response
+        ) as ExtendedTeam;
 
         if (teamData.members) {
           // Convert team members to the format expected by the component
@@ -106,40 +129,6 @@ const TeamManagement: React.FC<TeamManagementProps> = ({ mode = "view" }) => {
           setTeamMembers(formattedMembers);
         }
 
-        // Fetch unassigned lab members (this would need an API endpoint)
-        // For now, we'll use mock data
-        const mockUnassignedMembers = [
-          {
-            id: "3",
-            name: "David Johnson",
-            role: "PhD Student",
-            email: "david.johnson@example.com",
-            joinDate: "2023-05-10",
-          },
-          {
-            id: "4",
-            name: "Sarah Williams",
-            role: "Research Assistant",
-            email: "sarah.williams@example.com",
-            joinDate: "2023-06-22",
-          },
-          {
-            id: "5",
-            name: "Michael Brown",
-            role: "Lab Technician",
-            email: "michael.brown@example.com",
-            joinDate: "2023-04-15",
-          },
-          {
-            id: "6",
-            name: "Emily Davis",
-            role: "PhD Student",
-            email: "emily.davis@example.com",
-            joinDate: "2023-07-03",
-          },
-        ];
-
-        setUnassignedMembers(mockUnassignedMembers);
         setLoading(false);
       } catch (err) {
         console.error("Error fetching team details:", err);
@@ -155,69 +144,56 @@ const TeamManagement: React.FC<TeamManagementProps> = ({ mode = "view" }) => {
     const team = teams.find((t) => t.id === teamId);
     if (team) {
       setSelectedTeam(team);
+      setEditedTeam({
+        name: team.name,
+        description: team.description || "",
+        acro: team.acro,
+      });
+      setIsEditing(false);
     }
   };
 
-  const handleAddMembersToTeam = async () => {
-    if (!selectedTeam) {
-      alert("Please select a team first");
-      return;
-    }
+  const handleEditTeam = () => {
+    setIsEditing(true);
+  };
 
-    if (selectedMembers.length === 0) {
-      alert("Please select at least one member to add to your team");
-      return;
+  const handleCancelEdit = () => {
+    if (selectedTeam) {
+      setEditedTeam({
+        name: selectedTeam.name,
+        description: selectedTeam.description || "",
+        acro: selectedTeam.acro,
+      });
     }
+    setIsEditing(false);
+  };
+
+  const handleSaveTeam = async () => {
+    if (!selectedTeam) return;
 
     try {
       setLoading(true);
+      const updatedTeam = await teamsService.update(selectedTeam.id, {
+        name: editedTeam.name,
+        description: editedTeam.description,
+        acro: editedTeam.acro,
+      });
 
-      // Process each selected member
-      for (const memberId of selectedMembers) {
-        await teamsService.addMember(selectedTeam.id, {
-          userId: Number(memberId),
-        });
-      }
-
-      // Get the members to add (for UI update)
-      const membersToAdd = unassignedMembers
-        .filter((member) => selectedMembers.includes(member.id))
-        .map((member) => ({
-          id: member.id,
-          name: member.name,
-          role: member.role,
-          email: member.email,
-          joinDate: member.joinDate,
-          status: "active" as const,
-        }));
-
-      // Add to team members
-      setTeamMembers([...teamMembers, ...membersToAdd]);
-
-      // Remove from unassigned members
-      setUnassignedMembers(
-        unassignedMembers.filter(
-          (member) => !selectedMembers.includes(member.id)
+      // Update the local state
+      setTeams(
+        teams.map((team) =>
+          team.id === selectedTeam.id ? { ...team, ...updatedTeam } : team
         )
       );
 
-      // Clear selection
-      setSelectedMembers([]);
-
+      setSelectedTeam({ ...selectedTeam, ...updatedTeam });
+      setIsEditing(false);
       setLoading(false);
-      alert(`Successfully added ${membersToAdd.length} member(s) to your team`);
+      alert("Team updated successfully");
     } catch (err) {
-      console.error("Error adding members to team:", err);
-      setError("Failed to add members to team. Please try again later.");
+      console.error("Error updating team:", err);
+      setError("Failed to update team. Please try again later.");
       setLoading(false);
-    }
-  };
-
-  const toggleSelectMember = (memberId: string) => {
-    if (selectedMembers.includes(memberId)) {
-      setSelectedMembers(selectedMembers.filter((id) => id !== memberId));
-    } else {
-      setSelectedMembers([...selectedMembers, memberId]);
     }
   };
 
@@ -234,29 +210,10 @@ const TeamManagement: React.FC<TeamManagementProps> = ({ mode = "view" }) => {
         // Call API to remove member
         await teamsService.removeMember(selectedTeam.id, Number(memberId));
 
-        // Get the member to remove
-        const memberToRemove = teamMembers.find(
-          (member) => member.id === memberId
+        // Remove from team members
+        setTeamMembers(
+          teamMembers.filter((member) => member.id !== memberId)
         );
-
-        if (memberToRemove) {
-          // Add back to unassigned members
-          setUnassignedMembers([
-            ...unassignedMembers,
-            {
-              id: memberToRemove.id,
-              name: memberToRemove.name,
-              role: memberToRemove.role,
-              email: memberToRemove.email,
-              joinDate: memberToRemove.joinDate,
-            },
-          ]);
-
-          // Remove from team members
-          setTeamMembers(
-            teamMembers.filter((member) => member.id !== memberId)
-          );
-        }
 
         setLoading(false);
         alert("Team member removed successfully");
@@ -296,9 +253,7 @@ const TeamManagement: React.FC<TeamManagementProps> = ({ mode = "view" }) => {
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6">
-        {mode === "add" ? "Add Team Member" : "Team Management"}
-      </h1>
+      <h1 className="text-2xl font-bold mb-6">Team Management</h1>
 
       {/* Team Selection */}
       {teams.length > 0 && (
@@ -341,120 +296,154 @@ const TeamManagement: React.FC<TeamManagementProps> = ({ mode = "view" }) => {
         </div>
       )}
 
-      {selectedTeam && mode === "add" ? (
+      {selectedTeam && (
         <div className="space-y-6">
+          {/* Team Details */}
           <div className="bg-white rounded-lg p-6 shadow-lg">
-            <h2 className="text-xl font-semibold mb-4">
-              Available Lab Members
-            </h2>
-            <p className="text-gray-600 mb-4">
-              Select members to add to your team. These are lab members who are
-              not currently assigned to any team.
-            </p>
-
-            {unassignedMembers.length === 0 ? (
-              <div className="text-center py-8 bg-gray-50 rounded-lg">
-                <p className="text-gray-500">
-                  There are no available unassigned members at this time.
-                </p>
-              </div>
-            ) : (
-              <>
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Select
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Name
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Role
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Email
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Join Date
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {unassignedMembers.map((member) => (
-                        <tr
-                          key={member.id}
-                          className={`${selectedMembers.includes(member.id) ? "bg-blue-50" : ""} transition-colors duration-300`}
-                        >
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <input
-                              type="checkbox"
-                              checked={selectedMembers.includes(member.id)}
-                              onChange={() => toggleSelectMember(member.id)}
-                              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                            />
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
-                              <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
-                                <span className="text-gray-700 font-medium">
-                                  {member.name.charAt(0).toUpperCase()}
-                                </span>
-                              </div>
-                              <div className="ml-4">
-                                <div className="text-sm font-medium text-gray-900">
-                                  {member.name}
-                                </div>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                              {member.role}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {member.email}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {new Date(member.joinDate).toLocaleDateString()}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                <div className="mt-6 flex justify-end">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold">Team Details</h2>
+              {isEditing ? (
+                <div className="flex space-x-2">
                   <button
-                    onClick={handleAddMembersToTeam}
-                    disabled={selectedMembers.length === 0}
-                    className={`flex items-center px-4 py-2 rounded-lg ${
-                      selectedMembers.length === 0
-                        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                        : "bg-blue-500 text-white hover:bg-blue-600"
-                    } transition-colors duration-300`}
+                    onClick={handleSaveTeam}
+                    className="flex items-center px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors duration-300"
                   >
-                    <FaPlus className="mr-2" />
-                    Add{" "}
-                    {selectedMembers.length > 0
-                      ? `${selectedMembers.length} `
-                      : ""}
-                    Selected Members
+                    <FaSave className="mr-1" /> Save
+                  </button>
+                  <button
+                    onClick={handleCancelEdit}
+                    className="flex items-center px-3 py-1 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors duration-300"
+                  >
+                    <FaTimes className="mr-1" /> Cancel
                   </button>
                 </div>
-              </>
+              ) : (
+                <button
+                  onClick={handleEditTeam}
+                  className="flex items-center px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-300"
+                >
+                  <FaEdit className="mr-1" /> Edit Team
+                </button>
+              )}
+            </div>
+
+            {isEditing ? (
+              <div className="space-y-4">
+                <div>
+                  <label
+                    htmlFor="teamName"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Team Name
+                  </label>
+                  <input
+                    id="teamName"
+                    type="text"
+                    value={editedTeam.name}
+                    onChange={(e) =>
+                      setEditedTeam({ ...editedTeam, name: e.target.value })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="teamAcro"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Team Acronym
+                  </label>
+                  <input
+                    id="teamAcro"
+                    type="text"
+                    value={editedTeam.acro}
+                    onChange={(e) =>
+                      setEditedTeam({ ...editedTeam, acro: e.target.value })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="teamDescription"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Description
+                  </label>
+                  <textarea
+                    id="teamDescription"
+                    value={editedTeam.description}
+                    onChange={(e) =>
+                      setEditedTeam({
+                        ...editedTeam,
+                        description: e.target.value,
+                      })
+                    }
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500">
+                      Team Name
+                    </h3>
+                    <p className="mt-1 text-lg">{selectedTeam.name}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500">
+                      Team Acronym
+                    </h3>
+                    <p className="mt-1 text-lg">{selectedTeam.acro}</p>
+                  </div>
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500">
+                    Description
+                  </h3>
+                  <p className="mt-1">
+                    {selectedTeam.description || "No description available"}
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+                  <div className="bg-blue-50 rounded-lg p-4">
+                    <p className="text-sm text-blue-500 font-medium">
+                      Total Members
+                    </p>
+                    <p className="text-2xl font-bold">{teamMembers.length}</p>
+                  </div>
+                  <div className="bg-green-50 rounded-lg p-4">
+                    <p className="text-sm text-green-500 font-medium">
+                      Active Projects
+                    </p>
+                    <p className="text-2xl font-bold">
+                      {selectedTeam.projects?.length || 0}
+                    </p>
+                  </div>
+                  <div className="bg-purple-50 rounded-lg p-4">
+                    <p className="text-sm text-purple-500 font-medium">
+                      Created
+                    </p>
+                    <p className="text-lg font-bold">
+                      {new Date(selectedTeam.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+              </div>
             )}
           </div>
 
+          {/* Team Members Section */}
           <div className="bg-white rounded-lg p-6 shadow-lg">
-            <h2 className="text-xl font-semibold mb-4">Current Team Members</h2>
+            <h2 className="text-xl font-semibold mb-4">Team Members</h2>
+
             {teamMembers.length === 0 ? (
               <div className="text-center py-8 bg-gray-50 rounded-lg">
                 <p className="text-gray-500">
-                  Your team currently has no members. Add some members from the
-                  list above.
+                  Your team currently has no members.
                 </p>
               </div>
             ) : (
@@ -473,6 +462,9 @@ const TeamManagement: React.FC<TeamManagementProps> = ({ mode = "view" }) => {
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Status
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Joined
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Actions
@@ -515,142 +507,15 @@ const TeamManagement: React.FC<TeamManagementProps> = ({ mode = "view" }) => {
                             {member.status}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <button
-                            onClick={() => handleRemoveMember(member.id)}
-                            className="text-red-600 hover:text-red-900 transition-colors duration-300"
-                          >
-                            Remove
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        </div>
-      ) : selectedTeam ? (
-        <div className="space-y-6">
-          {/* Team Stats */}
-          <div className="bg-white rounded-lg p-6 shadow-lg">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold">Team Statistics</h2>
-              <FaChartBar className="text-blue-500 text-xl" />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-blue-50 rounded-lg p-4">
-                <p className="text-sm text-blue-500 font-medium">
-                  Total Members
-                </p>
-                <p className="text-2xl font-bold">{teamMembers.length}</p>
-              </div>
-              <div className="bg-green-50 rounded-lg p-4">
-                <p className="text-sm text-green-500 font-medium">
-                  Active Projects
-                </p>
-                <p className="text-2xl font-bold">
-                  {selectedTeam.projects?.length || 0}
-                </p>
-              </div>
-              <div className="bg-purple-50 rounded-lg p-4">
-                <p className="text-sm text-purple-500 font-medium">
-                  Completion Rate
-                </p>
-                <p className="text-2xl font-bold">85%</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg p-6 shadow-lg">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold">Current Team Members</h2>
-              <button
-                onClick={() =>
-                  (window.location.href = "/dashboard/TeamLeader/team/add")
-                }
-                className="flex items-center px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-300"
-              >
-                <FaUserPlus className="mr-2" />
-                Add Member
-              </button>
-            </div>
-
-            {teamMembers.length === 0 ? (
-              <div className="text-center py-8 bg-gray-50 rounded-lg">
-                <p className="text-gray-500">
-                  Your team currently has no members. Click "Add Member" to add
-                  some.
-                </p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Name
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Role
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Email
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Status
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {teamMembers.map((member) => (
-                      <tr key={member.id}>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
-                              <span className="text-gray-700 font-medium">
-                                {member.name.charAt(0).toUpperCase()}
-                              </span>
-                            </div>
-                            <div className="ml-4">
-                              <div className="text-sm font-medium text-gray-900">
-                                {member.name}
-                              </div>
-                              <div className="text-sm text-gray-500">
-                                {member.email}
-                              </div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                            {member.role}
-                          </span>
-                        </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {member.email}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span
-                            className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                              member.status === "active"
-                                ? "bg-green-100 text-green-800"
-                                : "bg-red-100 text-red-800"
-                            }`}
-                          >
-                            {member.status}
-                          </span>
+                          {new Date(member.joinDate).toLocaleDateString()}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <button
                             onClick={() => handleRemoveMember(member.id)}
-                            className="text-red-600 hover:text-red-900 transition-colors duration-300"
+                            className="flex items-center text-red-600 hover:text-red-900 transition-colors duration-300"
                           >
-                            Remove
+                            <FaTrash className="mr-1" /> Remove
                           </button>
                         </td>
                       </tr>
@@ -667,12 +532,10 @@ const TeamManagement: React.FC<TeamManagementProps> = ({ mode = "view" }) => {
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-semibold">Team Projects</h2>
                 <button
-                  onClick={() =>
-                    (window.location.href = "/dashboard/TeamLeader/projects")
-                  }
+                  onClick={() => navigate("/dashboard/TeamLeader/projects")}
                   className="text-blue-600 hover:text-blue-900 transition-colors duration-300"
                 >
-                  View All
+                  View All Projects
                 </button>
               </div>
               <div className="overflow-x-auto">
@@ -717,7 +580,8 @@ const TeamManagement: React.FC<TeamManagementProps> = ({ mode = "view" }) => {
             </div>
           )}
         </div>
-      ) : (
+      ) }
+      {selectedTeam && (
         <div className="text-center py-8 bg-gray-50 rounded-lg">
           <p className="text-gray-500">Please select a team to manage.</p>
         </div>

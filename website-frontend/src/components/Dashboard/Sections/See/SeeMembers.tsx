@@ -2,8 +2,26 @@ import React, { useState, useEffect } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { FaUserPlus, FaSearch, FaFilter } from "react-icons/fa";
-import { usersService } from "../../../../services/usersService";
+import { usersService, User } from "../../../../services/usersService";
+import { teamsService } from "../../../../services/teamsService";
 import { Role } from "../../../../types/type";
+
+// Extend User interface to include team memberships
+interface UserWithTeams extends User {
+  memberOfTeams?: {
+    id: number;
+    teamId: number;
+    userId: number;
+    team?: {
+      id: number;
+      name: string;
+    };
+  }[];
+  leadingTeams?: {
+    id: number;
+    name: string;
+  }[];
+}
 
 interface Member {
   id: number;
@@ -11,7 +29,7 @@ interface Member {
   email: string;
   role: string;
   team?: string;
-  joinDate: string;
+  createdAt: string;
   academicGrade?: string;
   photo?: string;
 }
@@ -30,6 +48,7 @@ const SeeMembers: React.FC<SeeMembersProps> = ({ title = "Lab Members" }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterRole, setFilterRole] = useState<string>("all");
   const [filterTeam, setFilterTeam] = useState<string>("");
+  const [filterJoinDate, setFilterJoinDate] = useState<string>("");
   const [sortConfig, setSortConfig] = useState<{
     key: keyof Member;
     direction: "ascending" | "descending";
@@ -51,7 +70,7 @@ const SeeMembers: React.FC<SeeMembersProps> = ({ title = "Lab Members" }) => {
           email: user.email,
           role: typeof user.role === "string" ? user.role : Role[user.role],
           team: user.team || "",
-          joinDate: user.joinDate || new Date().toISOString().split("T")[0],
+          createdAt: user.createdAt || new Date().toISOString().split("T")[0],
           academicGrade: "Member", // Default value
           photo: user.photo,
         }));
@@ -82,6 +101,9 @@ const SeeMembers: React.FC<SeeMembersProps> = ({ title = "Lab Members" }) => {
         break;
       case "team":
         setFilterTeam(value);
+        break;
+      case "joinDate":
+        setFilterJoinDate(value);
         break;
       default:
         break;
@@ -129,6 +151,13 @@ const SeeMembers: React.FC<SeeMembersProps> = ({ title = "Lab Members" }) => {
       filtered = filtered.filter((member) => member.team === filterTeam);
     }
 
+    // Apply join date filter
+    if (filterJoinDate ) {
+      filtered = filtered.filter(
+        (member) => member.createdAt === filterJoinDate
+      );
+    }
+
     // Apply sorting
     if (sortConfig) {
       filtered.sort((a, b) => {
@@ -149,6 +178,57 @@ const SeeMembers: React.FC<SeeMembersProps> = ({ title = "Lab Members" }) => {
   };
 
   const filteredMembers = getFilteredMembers();
+
+  // Add a simple delete handler
+  const handleDelete = async (id: number) => {
+    try {
+      if (
+        confirm(
+          "Are you sure you want to delete this member? This will remove them from all teams."
+        )
+      ) {
+        try {
+          // First, get detailed user information including team memberships
+          const userDetails = (await usersService.getById(id)) as UserWithTeams;
+          console.log("User details:", userDetails);
+
+          // If user is part of any teams, remove them from those teams first
+          if (
+            userDetails.memberOfTeams &&
+            userDetails.memberOfTeams.length > 0
+          ) {
+            try {
+              const removePromises = userDetails.memberOfTeams.map(
+                (membership) => teamsService.removeMember(membership.teamId, id)
+              );
+
+              // Wait for all team removal operations to complete
+              await Promise.all(removePromises);
+              console.log(
+                `User removed from ${userDetails.memberOfTeams.length} teams`
+              );
+            } catch (teamError) {
+              console.error("Error removing user from teams:", teamError);
+              // Continue with user deletion even if team removal fails
+            }
+          }
+        } catch (userDetailsError) {
+          console.error("Error getting user details:", userDetailsError);
+          // If we can't get user details, proceed with just deleting the user
+        }
+
+        // Now delete the user
+        await usersService.delete(id);
+        setMembersData(membersData.filter((member) => member.id !== id));
+        alert("Member deleted successfully");
+      }
+    } catch (error) {
+      console.error("Error deleting member:", error);
+      alert("Failed to delete member. Please try again.");
+    }
+  };
+
+  const showDeleteControls = true;
 
   return (
     <div className="space-y-6">
@@ -290,11 +370,11 @@ const SeeMembers: React.FC<SeeMembersProps> = ({ title = "Lab Members" }) => {
                   <th
                     scope="col"
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer"
-                    onClick={() => requestSort("joinDate")}
+                    onClick={() => requestSort("createdAt")}
                   >
                     <div className="flex items-center">
                       Join Date
-                      {sortConfig?.key === "joinDate" &&
+                      {sortConfig?.key === "createdAt" &&
                         (sortConfig.direction === "ascending" ? (
                           <ChevronUp className="ml-1 h-4 w-4" />
                         ) : (
@@ -369,7 +449,7 @@ const SeeMembers: React.FC<SeeMembersProps> = ({ title = "Lab Members" }) => {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                        {new Date(member.joinDate).toLocaleDateString()}
+                        {new Date(member.createdAt).toLocaleDateString()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <button
@@ -387,56 +467,17 @@ const SeeMembers: React.FC<SeeMembersProps> = ({ title = "Lab Members" }) => {
                         >
                           Edit
                         </button>
-                        <button
-                          onClick={async (e) => {
-                            e.preventDefault();
-                            if (
-                              window.confirm(
-                                `Are you sure you want to remove ${member.name}?`
-                              )
-                            ) {
-                              try {
-                                setLoading(true);
-                                await usersService.delete(member.id);
-                                setMembersData(
-                                  membersData.filter((m) => m.id !== member.id)
-                                );
-                                // Show success message
-                                const successMessage =
-                                  document.createElement("div");
-                                successMessage.className =
-                                  "fixed bottom-4 right-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded z-50";
-                                successMessage.textContent = `${member.name} has been removed successfully.`;
-                                document.body.appendChild(successMessage);
-                                setTimeout(
-                                  () =>
-                                    document.body.removeChild(successMessage),
-                                  3000
-                                );
-                              } catch (err) {
-                                console.error("Error deleting member:", err);
-                                // Show error message
-                                const errorMessage =
-                                  document.createElement("div");
-                                errorMessage.className =
-                                  "fixed bottom-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded z-50";
-                                errorMessage.textContent =
-                                  "Failed to delete member. Please try again.";
-                                document.body.appendChild(errorMessage);
-                                setTimeout(
-                                  () => document.body.removeChild(errorMessage),
-                                  3000
-                                );
-                              } finally {
-                                setLoading(false);
-                              }
-                            }
-                          }}
-                          disabled={loading}
-                          className={`text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
-                        >
-                          Delete
-                        </button>
+                        {showDeleteControls && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDelete(member.id);
+                            }}
+                            className="ml-4 text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+                          >
+                            Delete
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))
@@ -446,7 +487,10 @@ const SeeMembers: React.FC<SeeMembersProps> = ({ title = "Lab Members" }) => {
                       colSpan={6}
                       className="px-6 py-4 text-center text-gray-500 dark:text-gray-400"
                     >
-                      {searchTerm || filterRole !== "all" || filterTeam
+                      {searchTerm ||
+                      filterRole !== "all" ||
+                      filterTeam ||
+                      filterJoinDate
                         ? "No members match your search criteria"
                         : "No members found. Add some members to get started!"}
                     </td>

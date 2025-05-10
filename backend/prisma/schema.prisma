@@ -55,10 +55,9 @@ model Team {
 }
 
 model TeamMember {
-  id        Int      @id @default(autoincrement())
   teamId    Int
   team      Team     @relation(fields: [teamId], references: [id])
-  userId    Int
+  userId    Int      @id
   user      User     @relation(fields: [userId], references: [id])
   joinedAt  DateTime @default(now())
   
@@ -88,6 +87,8 @@ model Article {
   publishDate DateTime
   authorId    Int
   author      User      @relation(fields: [authorId], references: [id])
+  pdfLink     String?   // Optional PDF link
+  journalLink String?   // Optional journal link
 }
 
 model Project {

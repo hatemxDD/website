@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { BarChart2, Users, FileText, ChevronRight } from "lucide-react";
 import { useAuth } from "../../../../contexts/AuthContext";
-import { teamsService } from "../../../../services/teamsService";
+import {
+  teamsService,
+  Team,
+  TeamMember,
+} from "../../../../services/teamsService";
 import { Link } from "react-router-dom";
 
 interface StatCardProps {
@@ -49,7 +53,7 @@ interface Project {
   progress: number;
 }
 
-interface TeamMember {
+interface FormattedTeamMember {
   id: string | number;
   name: string;
   role: string;
@@ -57,13 +61,12 @@ interface TeamMember {
   photoUrl?: string;
 }
 
-interface Team {
+interface TeamProject {
   id: number;
   name: string;
-  description: string | null;
-  acro: string;
-  members?: any[];
-  projects?: any[];
+  status?: string;
+  deadline?: string;
+  progress?: number;
 }
 
 const TeamLeaderOverview: React.FC = () => {
@@ -72,8 +75,11 @@ const TeamLeaderOverview: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [teams, setTeams] = useState<Team[]>([]);
+  const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
   const [recentProjects, setRecentProjects] = useState<Project[]>([]);
-  const [teamMembersData, setTeamMembersData] = useState<TeamMember[]>([]);
+  const [teamMembersData, setTeamMembersData] = useState<FormattedTeamMember[]>(
+    []
+  );
   const [completionRate, setCompletionRate] = useState(0);
 
   // Calculate statistics
@@ -95,8 +101,10 @@ const TeamLeaderOverview: React.FC = () => {
 
         // Fetch teams where the current user is the leader
         const teamsResponse = await teamsService.getAll();
-        const userTeams = (teamsResponse as any).data.filter(
-          (team: any) => team.leader && team.leader.id === user?.id
+
+        // Filter teams where the current user is the leader
+        const userTeams = teamsResponse.filter(
+          (team) => team.leader && team.leader.id === user?.id
         );
 
         setTeams(userTeams);
@@ -104,36 +112,51 @@ const TeamLeaderOverview: React.FC = () => {
         // If there are teams, fetch details for the first one
         if (userTeams.length > 0) {
           const teamId = userTeams[0].id;
-          const teamDetails = await teamsService.getById(teamId);
-          const teamData = (teamDetails as any).data;
+          const teamData = await teamsService.getById(teamId);
+
+          setSelectedTeam(teamData);
 
           // Set members
-          if (teamData.members) {
-            const formattedMembers = teamData.members.map((member: any) => ({
+          if (teamData.members && Array.isArray(teamData.members)) {
+            const formattedMembers = teamData.members.map((member) => ({
               id: member.user?.id || member.userId,
               name: member.user?.name || "Unknown",
-              role: member.user?.role || "Team Member",
+              role: "Team Member", // Default role as it's not in the API
               email: member.user?.email || "",
+              photoUrl: undefined, // API doesn't provide photo URLs
             }));
 
             setTeamMembersData(formattedMembers);
+          } else {
+            setTeamMembersData([]);
           }
 
-          // Set projects
-          if (teamData.projects) {
-            const formattedProjects = teamData.projects.map((project: any) => ({
-              id: project.id,
-              name: project.name,
-              status: project.status || "In Progress",
-              deadline:
-                project.deadline ||
-                new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-              progress: project.progress || Math.floor(Math.random() * 100),
-            }));
+          // Handle projects (assuming custom field not in the original Team interface)
+          const teamProjects = (teamData as any).projects || [];
+          if (Array.isArray(teamProjects)) {
+            const formattedProjects = teamProjects.map(
+              (project: TeamProject) => ({
+                id: project.id,
+                name: project.name,
+                status: project.status || "In Progress",
+                deadline:
+                  project.deadline ||
+                  new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+                progress: project.progress || Math.floor(Math.random() * 100),
+              })
+            );
 
             setRecentProjects(formattedProjects);
             setCompletionRate(calculateCompletionRate(formattedProjects));
+          } else {
+            setRecentProjects([]);
+            setCompletionRate(0);
           }
+        } else {
+          setSelectedTeam(null);
+          setTeamMembersData([]);
+          setRecentProjects([]);
+          setCompletionRate(0);
         }
 
         setLoading(false);
@@ -144,7 +167,11 @@ const TeamLeaderOverview: React.FC = () => {
       }
     };
 
-    fetchData();
+    if (user) {
+      fetchData();
+    } else {
+      setLoading(false);
+    }
   }, [user]);
 
   const formatDate = (dateString: string) => {
@@ -313,7 +340,7 @@ const TeamLeaderOverview: React.FC = () => {
                 Team Members
               </h2>
               <Link
-                to="/dashboard/TeamLeader/team"
+                to="/dashboard/TeamLeader/my-team"
                 className="text-blue-600 dark:text-blue-400 hover:underline flex items-center text-sm"
               >
                 Manage Team <ChevronRight className="h-4 w-4 ml-1" />

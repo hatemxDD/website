@@ -10,6 +10,7 @@ export interface User {
   team?: string;
   joinDate?: string;
   photo?: string;
+  createdAt?: string;
   // Add other user properties as needed
 }
 
@@ -25,6 +26,7 @@ export interface CreateUserData {
 
 export interface Member {
   id: number;
+  email: string;
   userId: number;
   teamId: number;
   joinedAt: string;

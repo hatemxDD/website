@@ -19,7 +19,7 @@ import ProjectDetails from "./components/Project/ProjectDetails";
 import ProfileWrapper from "./components/User/ProfileWrapper";
 
 // Import dashboard components
-import LabLeaderDashboard from "./components/Dashboard/LabLeaderDashboard";
+import LabLeaderDashboard from "./components/Dashboard/Sections/LabLeader/LabLeaderDashboard";
 import TeamLeaderDashboard from "./components/Dashboard/Sections/TeamLeader/TeamLeaderDashboard";
 import MemberDashboard from "./components/Dashboard/Sections/Member/MemberDashboard";
 
@@ -27,13 +27,14 @@ import MemberDashboard from "./components/Dashboard/Sections/Member/MemberDashbo
 import DashboardOverview from "./components/Dashboard/Sections/DashboardOverview";
 import SeeMembers from "./components/Dashboard/Sections/See/SeeMembers";
 import AddMember from "./components/Dashboard/Sections/Create/AddMember";
+import EditMember from "./components/Dashboard/Sections/Edit/EditMember";
 import LabLeaderProjects from "./components/Dashboard/Sections/See/SeeProjects";
 import LabLeaderPublications from "./components/Dashboard/Sections/PublicationsManagement";
 import Settings from "./components/Dashboard/Sections/Settings";
 import SeeNews from "./components/Dashboard/Sections/See/SeeNews";
 import AddNews from "./components/Dashboard/Sections/Create/AddNews";
 import Profile from "./components/Dashboard/Sections/Profile";
-import EditNews from "./components/Dashboard/Sections/EditNews";
+import EditNews from "./components/Dashboard/Sections/Edit/EditNews";
 import SeeArticle from "./components/Dashboard/Sections/See/SeeArticle";
 import AddArticle from "./components/Dashboard/Sections/Create/AddArticle";
 
@@ -42,6 +43,7 @@ import TeamLeaderOverview from "./components/Dashboard/Sections/TeamLeader/TeamL
 import TeamManagement from "./components/Dashboard/Sections/TeamLeader/TeamManagement";
 import ProjectsManagement from "./components/Dashboard/Sections/TeamLeader/ProjectsManagement";
 import PublicationsManagement from "./components/Dashboard/Sections/TeamLeader/PublicationsManagement";
+import AddMemberToTeam from "./components/Dashboard/Sections/TeamLeader/AddMemberToTeam";
 
 // Import Member sections
 import MemberOverview from "./components/Dashboard/Sections/MemberOverview";
@@ -131,7 +133,7 @@ const AppRoutes = () => {
         <Route path="overview" element={<DashboardOverview />} />
         <Route path="members" element={<SeeMembers />} />
         <Route path="members/add" element={<AddMember />} />
-        <Route path="members/edit/:id" element={<SeeMembers />} />
+        <Route path="members/edit/:id" element={<EditMember />} />
         <Route path="members/remove/:id" element={<SeeMembers />} />
         <Route path="teams" element={<SeeTeams />} />
         <Route path="teams/add" element={<AddTeam />} />
@@ -165,13 +167,16 @@ const AppRoutes = () => {
       >
         <Route index element={<Navigate to="overview" replace />} />
         <Route path="overview" element={<TeamLeaderOverview />} />
-        <Route path="team" element={<TeamManagement />} />
-        <Route path="team/add" element={<TeamManagement />} />
-        <Route path="team/remove" element={<TeamManagement />} />
+        <Route path="my-team" element={<TeamManagement />} />
+        <Route path="my-team/add" element={<AddMemberToTeam />} />
+        <Route path="my-team/remove" element={<TeamManagement />} />
         <Route path="projects" element={<ProjectsManagement />} />
         <Route path="projects/add" element={<ProjectsManagement />} />
         <Route path="projects/tasks" element={<ProjectsManagement />} />
         <Route path="projects/timeline" element={<ProjectsManagement />} />
+        <Route path="articles" element={<SeeArticle />} />
+        <Route path="articles/add" element={<AddArticle />} />
+        <Route path="articles/edit/:id" element={<AddArticle />} />
         <Route path="publications" element={<PublicationsManagement />} />
         <Route path="publications/add" element={<PublicationsManagement />} />
         <Route path="news" element={<SeeNews />} />

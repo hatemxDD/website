@@ -49,6 +49,18 @@ const teamController = {
         where: { name: name },
       });
 
+      // Check if the team is already created by the user
+      const existingTeamByUser = await prisma.team.findFirst({
+        where: { leaderId: req.user.id },
+      });
+
+      if (existingTeamByUser) {
+        res
+          .status(400)
+          .json({ message: "You already have a team created" });
+        return;
+      }
+
       if (existingTeam) {
         res
           .status(400)
@@ -80,14 +92,14 @@ const teamController = {
           where: { id: leaderIdNumber },
           data: { role: "TeamLeader" },
         });
-      } else if (leader.role !== "TeamLeader" && leader.role !== "LabLeader") {
+      } else if (leader.role !== "TeamLeader") {
         res.status(400).json({
           message:
             "Selected user cannot be assigned as team leader with current role",
         });
         return;
       }
-      // If role is already "TeamLeader" or "LabLeader", no need to update
+      // If role is already "TeamLeader" , no need to update
 
       // Create new team
       const team = await prisma.team.create({
@@ -195,11 +207,8 @@ const teamController = {
         return;
       }
 
-      // Authorization check: only team leader or admin can update
-      if (
-        req.user?.role !== "LabLeader" &&
-        existingTeam.leaderId !== req.user?.id
-      ) {
+      // Authorization check: only team leader can update
+      if (existingTeam.leaderId !== req.user?.id) {   
         res.status(403).json({ message: "Not authorized to update this team" });
         return;
       }
@@ -209,8 +218,7 @@ const teamController = {
       if (name) updateData.name = name;
       if (description !== undefined) updateData.description = description;
       if (acro) updateData.acro = acro;
-      if (Number(leaderId) && req.user?.role === "LabLeader")
-        updateData.leaderId = Number(leaderId);
+      if (Number(leaderId)) updateData.leaderId = Number(leaderId);
 
       // Update team
       const updatedTeam = await prisma.team.update({

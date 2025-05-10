@@ -20,6 +20,7 @@ export interface TeamMember {
   id: number;
   teamId: number;
   userId: number;
+  email: string;
   joinedAt: string;
   user?: {
     id: number;
@@ -44,6 +45,12 @@ export interface UpdateTeamData {
 
 export interface AddTeamMemberData {
   userId: number;
+  email: string;
+}
+
+export interface MyTeamsResponse {
+  led: Team[];
+  member: Team[];
 }
 
 export const teamsService = {
@@ -56,6 +63,11 @@ export const teamsService = {
    * Get a team by ID
    */
   getById: (id: number) => api.get<Team>(`/api/teams/${id}`),
+
+  /**
+   * Get My Teams
+   */
+  getMyTeams: () => api.get<MyTeamsResponse>("/api/teams/my-teams"),
 
   /**
    * Create a new team

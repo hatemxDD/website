@@ -72,7 +72,7 @@ const AddArticle: React.FC = () => {
         });
       }
 
-      navigate("/dashboard/LabLeader/articles");
+      navigate(`/dashboard/${user.role}/articles`);
     } catch (err) {
       console.error("Error saving article:", err);
       setError(

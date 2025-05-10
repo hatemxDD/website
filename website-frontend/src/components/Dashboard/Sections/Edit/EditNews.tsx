@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { FaCalendarAlt, FaTag, FaSave, FaTimes } from "react-icons/fa";
-import { newsService, News } from "../../../services/newsService";
-import { useToast } from "../../../contexts/ToastContext";
+import { newsService, News } from "../../../../services/newsService";
+import { useToast } from "../../../../contexts/ToastContext";
 
 // Helper function to get current date in YYYY-MM-DD format
 const getCurrentDate = () => {
@@ -96,7 +96,6 @@ const EditNews: React.FC = () => {
       }));
     }
   };
-
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -301,8 +300,6 @@ const EditNews: React.FC = () => {
               </div>
             </div>
           </div>
-
-          
 
           <div>
             <label

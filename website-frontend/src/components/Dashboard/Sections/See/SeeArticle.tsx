@@ -53,20 +53,26 @@ const SeeArticle: React.FC = () => {
   };
 
   const handleDeleteArticle = async (id: number) => {
-    try {
-      setDeleteArticleId(id);
-      setIsDeleting(true);
+    if (
+      confirm(
+        "Are you sure you want to delete this article? This will remove it from the database."
+      )
+    ) {
+      try {
+        setDeleteArticleId(id);
+        setIsDeleting(true);
 
-      await articlesService.delete(id);
+        await articlesService.delete(id);
 
-      // Remove the deleted article from the state
-      setArticles(articles.filter((article) => article.id !== id));
-    } catch (err) {
-      console.error("Error deleting article:", err);
-      setError("Failed to delete article. Please try again.");
-    } finally {
-      setIsDeleting(false);
-      setDeleteArticleId(null);
+        // Remove the deleted article from the state
+        setArticles(articles.filter((article) => article.id !== id));
+      } catch (err) {
+        console.error("Error deleting article:", err);
+        setError("Failed to delete article. Please try again.");
+      } finally {
+        setIsDeleting(false);
+        setDeleteArticleId(null);
+      }
     }
   };
 
@@ -136,7 +142,7 @@ const SeeArticle: React.FC = () => {
 
                   <div className="flex items-center">
                     <User className="h-4 w-4 mr-1.5" />
-                    <span>{article.author?.title || "Unknown Author"}</span>
+                    <span>{article.author?.name || "Unknown Author"}</span>
                   </div>
                 </div>
 

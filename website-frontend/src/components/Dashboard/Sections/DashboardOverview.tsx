@@ -214,10 +214,10 @@ const DashboardOverview: React.FC = () => {
       onClick: () => navigate("/dashboard/LabLeader/members/add"),
     },
     {
-      title: "Create Team",
-      description: "Form a new research team and assign members.",
+      title: "See Teams",
+      description: "See all teams of the lab.",
       icon: <Building size={20} />,
-      onClick: () => navigate("/dashboard/LabLeader/teams/add"),
+      onClick: () => navigate("/dashboard/LabLeader/teams"),
     },
     {
       title: "Publish News",

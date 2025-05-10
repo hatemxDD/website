@@ -10,7 +10,7 @@ export interface Article {
   authorId: number;
   author?: {
     id: number;
-    title: string;
+    name: string;
     email: string;
   };
 }

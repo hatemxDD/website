@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import {useLocation, useNavigate, Outlet } from "react-router-dom";
-import { useAuth } from "../../contexts/AuthContext";
+import { useLocation, useNavigate, Outlet } from "react-router-dom";
+import { useAuth } from "../../../../contexts/AuthContext";
 import {
   FaHome,
   FaUsers,
@@ -20,7 +20,6 @@ import {
 } from "react-icons/fa";
 
 // Import dashboard sections
-
 
 const LabLeaderDashboard: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -66,12 +65,6 @@ const LabLeaderDashboard: React.FC = () => {
           label: "See Teams",
           path: "/dashboard/LabLeader/teams",
           icon: <FaClipboardList className="w-4 h-4" />,
-        },
-        {
-          id: "add-team",
-          label: "Add Team",
-          path: "/dashboard/LabLeader/teams/add",
-          icon: <FaPlus className="w-4 h-4" />,
         },
       ],
     },

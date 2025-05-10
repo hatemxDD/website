@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, Eye, Search, MoreHorizontal } from 'lucide-react';
-import CreateNews from './CreateNews';
-import EditNews from './EditNews';
+import React, { useState, useEffect } from "react";
+import { Plus, Edit2, Trash2, Eye, Search, MoreHorizontal } from "lucide-react";
+import CreateNews from "./CreateNews";
+import EditNews from "./Edit/EditNews";
 
 export interface NewsArticle {
   id: string;
@@ -15,7 +15,7 @@ export interface NewsArticle {
 
 const NewsList: React.FC = () => {
   const [articles, setArticles] = useState<NewsArticle[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const [editingArticleId, setEditingArticleId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -25,42 +25,48 @@ const NewsList: React.FC = () => {
     const fetchArticles = async () => {
       try {
         // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+
         // Mock data
         const mockArticles: NewsArticle[] = [
           {
-            id: '1',
-            title: 'New Research Grant Awarded to Laboratory',
-            content: 'Our laboratory has received a substantial grant to continue research in microbiology...',
-            author: 'Dr. Jane Smith',
-            publishDate: '2023-05-15',
+            id: "1",
+            title: "New Research Grant Awarded to Laboratory",
+            content:
+              "Our laboratory has received a substantial grant to continue research in microbiology...",
+            author: "Dr. Jane Smith",
+            publishDate: "2023-05-15",
             views: 234,
-            imageUrl: 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80'
+            imageUrl:
+              "https://images.unsplash.com/photo-1532094349884-543bc11b234d?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
           },
           {
-            id: '2',
-            title: 'Breakthrough in Cancer Research',
-            content: 'The team has made a significant breakthrough in understanding cell mutation...',
-            author: 'Prof. John Doe',
-            publishDate: '2023-06-22',
+            id: "2",
+            title: "Breakthrough in Cancer Research",
+            content:
+              "The team has made a significant breakthrough in understanding cell mutation...",
+            author: "Prof. John Doe",
+            publishDate: "2023-06-22",
             views: 567,
-            imageUrl: 'https://images.unsplash.com/photo-1576086213369-97a306d36557?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80'
+            imageUrl:
+              "https://images.unsplash.com/photo-1576086213369-97a306d36557?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
           },
           {
-            id: '3',
-            title: 'Annual Science Conference Announced',
-            content: 'The annual conference will be held in Boston this year featuring speakers from around the world...',
-            author: 'Conference Committee',
-            publishDate: '2023-04-10',
+            id: "3",
+            title: "Annual Science Conference Announced",
+            content:
+              "The annual conference will be held in Boston this year featuring speakers from around the world...",
+            author: "Conference Committee",
+            publishDate: "2023-04-10",
             views: 189,
-            imageUrl: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80'
-          }
+            imageUrl:
+              "https://images.unsplash.com/photo-1540575467063-178a50c2df87?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
+          },
         ];
-        
+
         setArticles(mockArticles);
       } catch (error) {
-        console.error('Error fetching articles:', error);
+        console.error("Error fetching articles:", error);
       } finally {
         setLoading(false);
       }
@@ -70,35 +76,40 @@ const NewsList: React.FC = () => {
   }, []);
 
   const handleDeleteArticle = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this article?')) {
+    if (window.confirm("Are you sure you want to delete this article?")) {
       setLoading(true);
       try {
         // Simulate API call to delete
-        await new Promise(resolve => setTimeout(resolve, 800));
-        setArticles(articles.filter(article => article.id !== id));
+        await new Promise((resolve) => setTimeout(resolve, 800));
+        setArticles(articles.filter((article) => article.id !== id));
       } catch (error) {
-        console.error('Error deleting article:', error);
+        console.error("Error deleting article:", error);
       } finally {
         setLoading(false);
       }
     }
   };
 
-  const filteredArticles = articles.filter(article => 
-    article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    article.author.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    article.content.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredArticles = articles.filter(
+    (article) =>
+      article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      article.author.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      article.content.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   // Format date to a more readable format
   const formatDate = (dateString: string) => {
-    const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'long', day: 'numeric' };
+    const options: Intl.DateTimeFormatOptions = {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    };
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
 
   if (isCreating) {
     return (
-      <CreateNews 
+      <CreateNews
         onCancel={() => setIsCreating(false)}
         onSuccess={() => {
           setIsCreating(false);
@@ -111,7 +122,7 @@ const NewsList: React.FC = () => {
 
   if (editingArticleId) {
     return (
-      <EditNews 
+      <EditNews
         articleId={editingArticleId}
         onCancel={() => setEditingArticleId(null)}
         onSuccess={() => {
@@ -155,26 +166,43 @@ const NewsList: React.FC = () => {
         </div>
       ) : filteredArticles.length === 0 ? (
         <div className="text-center py-16 text-gray-500">
-          {searchQuery ? 'No articles match your search criteria' : 'No articles have been created yet'}
+          {searchQuery
+            ? "No articles match your search criteria"
+            : "No articles have been created yet"}
         </div>
       ) : (
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
                   Article
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
                   Author
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
                   Date
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
                   Views
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
                   Actions
                 </th>
               </tr>
@@ -186,15 +214,17 @@ const NewsList: React.FC = () => {
                     <div className="flex items-center">
                       {article.imageUrl && (
                         <div className="flex-shrink-0 h-10 w-10 mr-4">
-                          <img 
-                            className="h-10 w-10 rounded-md object-cover" 
-                            src={article.imageUrl} 
-                            alt={article.title} 
+                          <img
+                            className="h-10 w-10 rounded-md object-cover"
+                            src={article.imageUrl}
+                            alt={article.title}
                           />
                         </div>
                       )}
                       <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">{article.title}</div>
+                        <div className="text-sm font-medium text-gray-900">
+                          {article.title}
+                        </div>
                         <div className="text-sm text-gray-500">
                           {article.content.substring(0, 60)}...
                         </div>
@@ -202,10 +232,14 @@ const NewsList: React.FC = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{article.author}</div>
+                    <div className="text-sm text-gray-900">
+                      {article.author}
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{formatDate(article.publishDate)}</div>
+                    <div className="text-sm text-gray-900">
+                      {formatDate(article.publishDate)}
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     <div className="flex items-center">
@@ -247,4 +281,4 @@ const NewsList: React.FC = () => {
   );
 };
 
-export default NewsList; 
+export default NewsList;

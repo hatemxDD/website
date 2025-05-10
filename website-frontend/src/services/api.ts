@@ -53,7 +53,15 @@ export const api = {
       }
 
       const error = await response.json().catch(() => ({}));
-      throw new Error(error.message || "Something went wrong");
+      throw new Error(
+        error.message ||
+          `Request failed with status ${response.status}: ${response.statusText || "Unknown error"}`
+      );
+    }
+
+    // Try to parse JSON response, return empty object if no content
+    if (response.status === 204) {
+      return {} as T;
     }
 
     return response.json();
