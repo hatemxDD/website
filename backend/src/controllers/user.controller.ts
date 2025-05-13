@@ -334,6 +334,7 @@ const userController = {
       res.status(500).json({ message: "Server error while updating profile" });
     }
   },
+
 };
 
 export default userController;

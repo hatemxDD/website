@@ -1,23 +1,20 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  ArrowLeft,
-  Save,
-  AlertCircle,
-  Loader2,
-} from "lucide-react";
+import { ArrowLeft, Save, AlertCircle, Loader2 } from "lucide-react";
 import { teamsService } from "../../../../services/teamsService";
 import { usersService } from "../../../../services/usersService";
 import { User } from "../../../../services/usersService";
+import { useAuth } from "../../../../contexts/AuthContext";
 
 const AddTeam: React.FC = () => {
   const navigate = useNavigate();
+  const { user: currentUser } = useAuth();
 
   const [formData, setFormData] = useState({
     name: "",
     description: "",
     acro: "",
-    leaderId: "",
+    leaderId: currentUser?.id.toString() || "",
   });
 
   const [availableMembers, setAvailableMembers] = useState<User[]>([]);
@@ -32,8 +29,30 @@ const AddTeam: React.FC = () => {
     const fetchMembers = async () => {
       try {
         setLoadingMembers(true);
-        const members = await usersService.getAll();
-        setAvailableMembers(members);
+        // Get all users and their team memberships
+        const [allMembers, allTeams] = await Promise.all([
+          usersService.getAll(),
+          teamsService.getAll(),
+        ]);
+
+        // Get all team memberships
+        const teamMemberships = allTeams.flatMap(
+          (team) => team.members?.map((member) => member.userId) || []
+        );
+
+
+        // Filter members who:
+        // 1. Are not the current user
+        // 2. Have the TeamMember role
+        // 3. Are not in any team (not in teamMemberships array)
+        const filteredMembers = allMembers.filter(
+          (member) =>
+            member.id !== currentUser?.id &&
+            member.role === "TeamMember" &&
+            !teamMemberships.includes(member.id)
+        );
+
+        setAvailableMembers(filteredMembers);
       } catch (error) {
         console.error("Error fetching members:", error);
         setErrors((prev) => ({
@@ -46,7 +65,7 @@ const AddTeam: React.FC = () => {
     };
 
     fetchMembers();
-  }, []);
+  }, [currentUser?.id]);
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -90,10 +109,6 @@ const AddTeam: React.FC = () => {
       newErrors.acro = "Team acronym is required";
     }
 
-    // if (!formData.leaderId) {
-    //   newErrors.leaderId = "Team leader is required";
-    // }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -117,20 +132,10 @@ const AddTeam: React.FC = () => {
         leaderId: parseInt(formData.leaderId),
       });
 
-      // Then set the team leader (if not already set during creation)
-      if (
-        formData.leaderId &&
-        createdTeam.leaderId !== parseInt(formData.leaderId)
-      ) {
-        await teamsService.update(createdTeam.id, {
-          leaderId: parseInt(formData.leaderId),
-        });
-      }
-
       // Then add all the selected members to the team
       await Promise.all(
         selectedMembers.map((userId) =>
-          teamsService.addMember(createdTeam.id, { userId })
+          teamsService.addMember(createdTeam.id, { userId, email: "" })
         )
       );
 
@@ -141,13 +146,13 @@ const AddTeam: React.FC = () => {
         name: "",
         description: "",
         acro: "",
-        leaderId: "",
+        leaderId: currentUser?.id.toString() || "",
       });
       setSelectedMembers([]);
 
       // Navigate back after a short delay to show the success message
       setTimeout(() => {
-        navigate("/dashboard/LabLeader/teams");
+        navigate("/dashboard/TeamLeader/my-team");
       }, 1500);
     } catch (error) {
       console.error("Error creating team:", error);
@@ -263,47 +268,6 @@ const AddTeam: React.FC = () => {
                 <p className="mt-1 text-sm text-red-600 dark:text-red-400">
                   {errors.description}
                 </p>
-              )}
-            </div>
-
-            <div>
-              <label
-                htmlFor="leaderId"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-              >
-                Team Leader*
-              </label>
-              {loadingMembers ? (
-                <div className="flex items-center space-x-2 p-2">
-                  <Loader2 className="h-5 w-5 animate-spin text-blue-500" />
-                  <span className="text-sm text-gray-500 dark:text-gray-400">
-                    Loading members...
-                  </span>
-                </div>
-              ) : (
-                <>
-                  <select
-                    id="leaderId"
-                    name="leaderId"
-                    value={formData.leaderId}
-                    onChange={handleChange}
-                    className={`w-full p-3 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white ${
-                      errors.leaderId ? "border-red-500" : "border-gray-300"
-                    }`}
-                  >
-                    <option value="">Select a team leader</option>
-                    {availableMembers.map((member) => (
-                      <option key={member.id} value={member.id}>
-                        {member.name} ({member.email})
-                      </option>
-                    ))}
-                  </select>
-                  {errors.leaderId && (
-                    <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-                      {errors.leaderId}
-                    </p>
-                  )}
-                </>
               )}
             </div>
 

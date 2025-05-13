@@ -126,7 +126,7 @@ const AddMember: React.FC = () => {
       // Redirect after a short delay
       setTimeout(() => {
         navigate("/dashboard/LabLeader/members");
-      }, 1500);
+      }, 500);
     } catch (err: any) {
       console.error("Error creating user:", err);
       // Provide more specific error message if available

@@ -31,62 +31,60 @@ const AddMemberToTeam = () => {
         setLoading(true);
         setError(null);
 
-        // First fetch the current user to get their ID
+        // 1. Get current user and verify team leader role
         const currentUser = await usersService.getProfile();
-
         if (currentUser.role !== Role.TeamLeader) {
           setError("You must be a team leader to access this page.");
           return;
         }
 
-        // Fetch all users and teams in parallel
-        const [users, allTeams] = await Promise.all([
-          usersService.getAll(),
-          teamsService.getAll(),
-        ]);
-
-        // Get all team member IDs from all teams
-        const teamMemberIds = new Set(
-          allTeams.flatMap(
-            (team) => team.members?.map((member) => member.userId) || []
-          )
-        );
-
-        // Filter only TeamMember role users who are not in any team
-        const availableTeamMembers = users
-          .filter(
-            (user) =>
-              user.role === Role.TeamMember && // Only include TeamMember role users
-              !teamMemberIds.has(user.id) && // Exclude users who are already in any team
-              user.id !== currentUser.id // Exclude the current user
-          )
-          .map((user) => ({
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            role: user.role ? user.role : Role.TeamMember,
-          }));
-
-        setMembers(availableTeamMembers);
-
-        // Fetch team leader's team
+        // 2. Get current team
         const myTeams = await teamsService.getMyTeams();
-
-        if (!myTeams.led || myTeams.led.length === 0) {
+        if (!myTeams.led?.[0]?.id) {
           setError(
             "You don't have a team assigned. Please contact the administrator."
           );
           return;
         }
+        const currentTeam = myTeams.led[0];
+        setCurrentTeam(currentTeam.id);
 
-        // Since a team leader can only have one team, we take the first one
-        const team = myTeams.led[0];
-        if (!team || !team.id) {
-          setError("Invalid team data received. Please try again later.");
-          return;
-        }
+        // 3. Get all users and teams in parallel
+        const [allUsers, allTeams] = await Promise.all([
+          usersService.getAll(),
+          teamsService.getAll(),
+        ]);
+        // 4. Create a map of all team members across all teams
+        const teamMembersMap = new Map<number, boolean>();
+        allTeams.forEach((team) => {
+          team.members?.forEach((member) => {
+            teamMembersMap.set(member.userId, true);
+          });
+        });
 
-        setCurrentTeam(team.id);
+        // 5. Filter available team members
+        const availableTeamMembers = allUsers
+          .filter((user) => {
+            // Must be a team member
+            if (user.role !== Role.TeamMember) return false;
+
+            // Must not be the current user
+            if (user.id === currentUser.id) return false;
+
+            // Must not be in any team
+            if (teamMembersMap.has(user.id)) return false;
+
+            return true;
+          })
+          .map((user) => ({
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+          }));
+
+        console.log("Available team members:", availableTeamMembers);
+        setMembers(availableTeamMembers);
       } catch (err) {
         console.error("Error fetching data:", err);
         setError("Failed to load data. Please try again later.");

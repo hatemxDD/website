@@ -7,7 +7,7 @@ import adminMiddleware from "../middlewares/admin.middleware";
 const router = express.Router();
 
 // Public routes
-router.post("/register",authMiddleware, adminMiddleware, userController.register);
+router.post("/register", userController.register);
 router.post("/login", userController.login);
 
 // Protected routes

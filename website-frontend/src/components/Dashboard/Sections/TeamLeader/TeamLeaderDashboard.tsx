@@ -22,6 +22,7 @@ import Profile from "../../Sections/Profile";
 import SeeArticle from "../See/SeeArticle";
 import AddArticle from "../Create/AddArticle";
 import AddMemberToTeam from "./AddMemberToTeam";
+import AddTeam from "../Create/AddTeam";
 // Use the correct role type from Prisma schema
 type UserRole = "TeamLeader";
 
@@ -62,6 +63,12 @@ const TeamLeaderDashboard: React.FC = () => {
           path: "/dashboard/TeamLeader/my-team",
           icon: <FaUsers className="nav-icon" />,
           label: "View Team",
+          permissions: ["TeamLeader"],
+        },
+        {
+          path: "/dashboard/TeamLeader/my-team/create",
+          icon: <FaUserPlus className="nav-icon" />,
+          label: "Create Team",
           permissions: ["TeamLeader"],
         },
         {
@@ -135,6 +142,7 @@ const TeamLeaderDashboard: React.FC = () => {
         <Route path="my-team">
           <Route index element={<TeamManagement />} />
           <Route path="add" element={<AddMemberToTeam/>} />
+          <Route path="create" element={<AddTeam />} />
         </Route>
 
         {/* Projects Routes */}

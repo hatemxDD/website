@@ -55,9 +55,7 @@ const teamController = {
       });
 
       if (existingTeamByUser) {
-        res
-          .status(400)
-          .json({ message: "You already have a team created" });
+        res.status(400).json({ message: "You already have a team created" });
         return;
       }
 
@@ -208,7 +206,7 @@ const teamController = {
       }
 
       // Authorization check: only team leader can update
-      if (existingTeam.leaderId !== req.user?.id) {   
+      if (existingTeam.leaderId !== req.user?.id) {
         res.status(403).json({ message: "Not authorized to update this team" });
         return;
       }
@@ -477,6 +475,108 @@ const teamController = {
       res
         .status(500)
         .json({ message: "Server error while fetching user teams" });
+    }
+  },
+
+  // Get all team members with their team information
+  getAllTeamMembers: async (_req: Request, res: Response): Promise<void> => {
+    try {
+      const teamMembers = await prisma.teamMember.findMany({
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              role: true,
+            },
+          },
+          team: {
+            select: {
+              id: true,
+              name: true,
+              acro: true,
+            },
+          },
+        },
+      });
+
+      res.json(teamMembers);
+    } catch (error) {
+      console.error("Error fetching team members:", error);
+      res
+        .status(500)
+        .json({ message: "Server error while fetching team members" });
+    }
+  },
+
+  // Get team members for a specific team
+  getTeamMembersByTeamId: async (
+    req: Request,
+    res: Response
+  ): Promise<void> => {
+    try {
+      const { teamId } = req.params;
+
+      const teamMembers = await prisma.teamMember.findMany({
+        where: {
+          teamId: Number(teamId),
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              role: true,
+            },
+          },
+        },
+      });
+
+      res.json(teamMembers);
+    } catch (error) {
+      console.error("Error fetching team members:", error);
+      res
+        .status(500)
+        .json({ message: "Server error while fetching team members" });
+    }
+  },
+
+  // Get teams for a specific user
+  getTeamsByUserId: async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { userId } = req.params;
+
+      const teamMembers = await prisma.teamMember.findMany({
+        where: {
+          userId: Number(userId),
+        },
+        include: {
+          team: {
+            select: {
+              id: true,
+              name: true,
+              acro: true,
+              description: true,
+              leader: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      res.json(teamMembers);
+    } catch (error) {
+      console.error("Error fetching user's teams:", error);
+      res
+        .status(500)
+        .json({ message: "Server error while fetching user's teams" });
     }
   },
 };

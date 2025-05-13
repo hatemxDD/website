@@ -37,6 +37,7 @@ model User {
   updatedAt      DateTime        @updatedAt
   leadingTeams   Team[]          @relation("TeamLeader")
   memberOfTeams  TeamMember[]
+  teams          Team[]          @relation("TeamMembers")
   news           News[]
   articles       Article[]
 }
@@ -49,6 +50,7 @@ model Team {
   leaderId    Int
   leader      User         @relation("TeamLeader", fields: [leaderId], references: [id])
   members     TeamMember[]
+  memberUsers User[]       @relation("TeamMembers")
   projects    Project[]    // Relation to projects assigned to this team
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt

@@ -10,6 +10,7 @@ import {
   FaChevronDown,
   FaBell,
   FaCog,
+  FaHome,
 } from "react-icons/fa";
 
 interface MenuItem {
@@ -87,7 +88,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           {/* Logo and Brand */}
           <div className="flex items-center justify-between h-16 px-4 bg-blue-950">
             <div className="flex items-center space-x-3">
-              <img src="/logo.png" alt="Lab Logo" className="w-8 h-8" />
+              <FaHome className="w-8 h-8" />
               <span className="text-lg font-semibold">Research Lab</span>
             </div>
           </div>
@@ -109,7 +110,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
           {/* Navigation */}
           <nav className="flex-1 overflow-y-auto px-2 py-4">
-            <div className="space-y-1">
+            <div className="space-y-2">
               {menuItems.map((item) => (
                 <div key={item.id}>
                   <button
@@ -118,18 +119,16 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                         ? toggleSubmenu(item.id)
                         : handleMenuClick(item)
                     }
-                    className={`w-full flex items-center justify-between px-4 py-3 text-sm rounded-lg transition-colors duration-200
+                    className={`w-full flex items-center justify-between px-4 py-3 text-sm rounded-lg transition-all duration-200
                       ${
-                        item.path
-                          ? isActive(item.path)
-                          : false
-                            ? "bg-blue-700 text-white"
-                            : "text-blue-100 hover:bg-blue-700/50"
+                        item.path && isActive(item.path)
+                          ? "bg-white/20 text-white shadow-md"
+                          : "bg-white/10 text-gray-200 hover:bg-white/15"
                       }`}
                   >
                     <div className="flex items-center space-x-3">
-                      <span className="text-xl">{item.icon}</span>
-                      <span>{item.label}</span>
+                      <span className="text-lg">{item.icon}</span>
+                      <span className="font-medium">{item.label}</span>
                     </div>
                     {item.subItems && (
                       <FaChevronDown
@@ -146,14 +145,14 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                         <Link
                           key={subItem.path}
                           to={subItem.path}
-                          className={`flex items-center px-4 py-2 text-sm rounded-lg transition-colors duration-200
+                          className={`flex items-center px-4 py-2.5 text-sm rounded-lg transition-all duration-200
                             ${
                               isActive(subItem.path)
-                                ? "bg-blue-700 text-white"
-                                : "text-blue-100 hover:bg-blue-700/50"
+                                ? "bg-white/20 text-white shadow-sm"
+                                : "bg-white/10 text-gray-200 hover:bg-white/15"
                             }`}
                         >
-                          <span className="mr-3">{subItem.icon}</span>
+                          <span className="mr-3 text-base">{subItem.icon}</span>
                           {subItem.label}
                         </Link>
                       ))}
@@ -165,11 +164,11 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           </nav>
 
           {/* Footer */}
-          <div className="p-4 border-t border-blue-700 bg-blue-950">
+          <div className="p-4 border-t border-indigo-700/50 bg-indigo-950">
             <div className="flex items-center justify-between">
               <button
                 onClick={() => setIsDarkMode(!isDarkMode)}
-                className="p-2 rounded-lg hover:bg-blue-700/50 transition-colors duration-200"
+                className="p-2 rounded-lg bg-white/10 text-gray-200 hover:bg-white/15 transition-all duration-200"
               >
                 {isDarkMode ? (
                   <FaSun className="w-5 h-5" />
@@ -179,7 +178,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
               </button>
               <button
                 onClick={logout}
-                className="flex items-center space-x-2 px-4 py-2 rounded-lg text-red-400 hover:bg-red-500/20 transition-colors duration-200"
+                className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-white/10 text-gray-200 hover:bg-white/15 transition-all duration-200"
               >
                 <FaSignOutAlt className="w-5 h-5" />
                 <span>Logout</span>

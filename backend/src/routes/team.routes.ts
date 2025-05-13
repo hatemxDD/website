@@ -12,7 +12,7 @@ router.get("/my-teams", authMiddleware, teamController.getMyTeams);
 router.get("/:id", teamController.getTeamById);
 
 // Protected routes
-router.post("/", authMiddleware, adminMiddleware, teamController.createTeam);
+router.post("/", authMiddleware, teamController.createTeam);
 router.put("/:id", authMiddleware, teamController.updateTeam);
 router.delete(
   "/:id",
@@ -28,5 +28,13 @@ router.delete(
   authMiddleware,
   teamController.removeTeamMember
 );
+
+// Protected routes
+router.use(authMiddleware);
+
+// Team member routes
+router.get("/members", teamController.getAllTeamMembers);
+router.get("/members/team/:teamId", teamController.getTeamMembersByTeamId);
+router.get("/members/user/:userId", teamController.getTeamsByUserId);
 
 export default router;

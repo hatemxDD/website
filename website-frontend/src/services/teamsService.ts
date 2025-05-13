@@ -14,6 +14,12 @@ export interface Team {
     email: string;
   };
   members?: TeamMember[];
+  memberUsers?: {
+    id: number;
+    name: string;
+    email: string;
+    role: string;
+  }[];
 }
 
 export interface TeamMember {
@@ -26,6 +32,7 @@ export interface TeamMember {
     id: number;
     name: string;
     email: string;
+    role: string;
   };
 }
 
