@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Plus, Edit2, Trash2, Eye, Search, MoreHorizontal } from "lucide-react";
-import CreateNews from "./CreateNews";
+import CreateNews from "./Create/AddNews";
 import EditNews from "./Edit/EditNews";
 
 export interface NewsArticle {
@@ -27,44 +27,8 @@ const NewsList: React.FC = () => {
         // Simulate API delay
         await new Promise((resolve) => setTimeout(resolve, 1000));
 
-        // Mock data
-        const mockArticles: NewsArticle[] = [
-          {
-            id: "1",
-            title: "New Research Grant Awarded to Laboratory",
-            content:
-              "Our laboratory has received a substantial grant to continue research in microbiology...",
-            author: "Dr. Jane Smith",
-            publishDate: "2023-05-15",
-            views: 234,
-            imageUrl:
-              "https://images.unsplash.com/photo-1532094349884-543bc11b234d?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-          },
-          {
-            id: "2",
-            title: "Breakthrough in Cancer Research",
-            content:
-              "The team has made a significant breakthrough in understanding cell mutation...",
-            author: "Prof. John Doe",
-            publishDate: "2023-06-22",
-            views: 567,
-            imageUrl:
-              "https://images.unsplash.com/photo-1576086213369-97a306d36557?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-          },
-          {
-            id: "3",
-            title: "Annual Science Conference Announced",
-            content:
-              "The annual conference will be held in Boston this year featuring speakers from around the world...",
-            author: "Conference Committee",
-            publishDate: "2023-04-10",
-            views: 189,
-            imageUrl:
-              "https://images.unsplash.com/photo-1540575467063-178a50c2df87?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-          },
-        ];
+        
 
-        setArticles(mockArticles);
       } catch (error) {
         console.error("Error fetching articles:", error);
       } finally {
@@ -107,32 +71,9 @@ const NewsList: React.FC = () => {
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
 
-  if (isCreating) {
-    return (
-      <CreateNews
-        onCancel={() => setIsCreating(false)}
-        onSuccess={() => {
-          setIsCreating(false);
-          // In a real app, you would refetch the articles
-          // or update the state with the new article
-        }}
-      />
-    );
-  }
 
-  if (editingArticleId) {
-    return (
-      <EditNews
-        articleId={editingArticleId}
-        onCancel={() => setEditingArticleId(null)}
-        onSuccess={() => {
-          setEditingArticleId(null);
-          // In a real app, you would refetch the articles
-          // or update the state with the edited article
-        }}
-      />
-    );
-  }
+
+
 
   return (
     <div className="bg-white rounded-lg shadow-sm p-6">

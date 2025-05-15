@@ -16,9 +16,10 @@ interface AuthRequest extends Request {
 interface CreateArticleRequest {
   title: string;
   content: string;
-  publishDate: Date; 
+  publishDate: Date;
   authorId: number;
-  
+  pdfLink: string;
+  journalLink: string;
 }
 
 interface UpdateArticleRequest {
@@ -26,6 +27,8 @@ interface UpdateArticleRequest {
   content?: string;
   authorId?: number;
   publishDate?: Date;
+  pdfLink?: string;
+  journalLink?: string;
 }
 
 // Article Controller
@@ -38,7 +41,7 @@ const articleController = {
         return;
       }
 
-      const { title, content, publishDate }: CreateArticleRequest = req.body;
+      const { title, content, publishDate, pdfLink, journalLink }: CreateArticleRequest = req.body;
       const authorId = req.user.id;
 
       // Create new article
@@ -48,6 +51,8 @@ const articleController = {
           content,
           authorId,
           publishDate,
+          pdfLink,
+          journalLink,
         },
         include: {
           author: {
@@ -126,7 +131,7 @@ const articleController = {
   updateArticle: async (req: AuthRequest, res: Response): Promise<void> => {
     try {
       const { id } = req.params;
-      const { title, content, publishDate }: UpdateArticleRequest = req.body;
+      const { title, content, publishDate, pdfLink, journalLink }: UpdateArticleRequest = req.body;
 
       // Check if article exists
       const existingArticle = await prisma.article.findUnique({
@@ -154,6 +159,9 @@ const articleController = {
       if (title) updateData.title = title;
       if (content) updateData.content = content;
       if (publishDate) updateData.publishDate = publishDate;
+      if (pdfLink) updateData.pdfLink = pdfLink;
+      if (journalLink) updateData.journalLink = journalLink;
+
       // Update article
       const updatedArticle = await prisma.article.update({
         where: { id: Number(id) },

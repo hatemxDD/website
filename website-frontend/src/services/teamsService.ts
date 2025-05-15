@@ -36,6 +36,52 @@ export interface TeamMember {
   };
 }
 
+export interface TeamMemberWithTeam {
+  teamId: number;
+  userId: number;
+  joinedAt: string;
+  user: {
+    id: number;
+    name: string;
+    email: string;
+    role: string;
+  };
+  team: {
+    id: number;
+    name: string;
+    acro: string;
+  };
+}
+
+export interface TeamMemberWithUser {
+  teamId: number;
+  userId: number;
+  joinedAt: string;
+  user: {
+    id: number;
+    name: string;
+    email: string;
+    role: string;
+  };
+}
+
+export interface UserTeam {
+  teamId: number;
+  userId: number;
+  joinedAt: string;
+  team: {
+    id: number;
+    name: string;
+    acro: string;
+    description: string;
+    leader: {
+      id: number;
+      name: string;
+      email: string;
+    };
+  };
+}
+
 export interface CreateTeamData {
   name: string;
   description?: string;
@@ -109,4 +155,11 @@ export const teamsService = {
    */
   removeMember: (teamId: number, userId: number) =>
     api.delete<void>(`/api/teams/${teamId}/members/${userId}`),
+
+  /**
+   * Get all team members
+   */
+  getAllTeamMembers: () =>
+    api.get<TeamMemberWithTeam[]>(`/api/teams/members/all`),
 };
+

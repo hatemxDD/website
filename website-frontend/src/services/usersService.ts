@@ -11,6 +11,7 @@ export interface User {
   joinDate?: string;
   photo?: string;
   createdAt?: string;
+  
   // Add other user properties as needed
 }
 

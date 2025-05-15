@@ -7,6 +7,8 @@ export interface Article {
   createdAt: string;
   updatedAt: string;
   publishDate: string;
+  pdfLink: string;
+  journalLink: string;
   authorId: number;
   author?: {
     id: number;
@@ -20,6 +22,8 @@ export interface CreateArticleData {
   content: string;
   publishDate: Date;
   authorId: number;
+  pdfLink: string;
+  journalLink: string;
 }
 
 export interface UpdateArticleData {
@@ -27,6 +31,8 @@ export interface UpdateArticleData {
   content?: string;
   publishDate?: Date;
   authorId?: number;
+  pdfLink?: string;
+  journalLink?: string;
 }
 
 export const articlesService = {

@@ -40,19 +40,17 @@ const Group: React.FC = () => {
         setLoading(true);
         // Fetch teams from the backend
         const teamsData = await teamsService.getAll();
-
+        const projectsData = await projectsService.getAll();
         // Add member and project counts for each team
         const teamsWithCounts = await Promise.all(
           teamsData.map(async (team) => {
-            // Get team members count
-            const members = await teamsService.getMembers(team.id);
-
             // Get projects for this team
-            const projects = await projectsService.getByTeam(team.id);
-
+            const projects = projectsData.filter(
+              (project) => project.teamId === team.id
+            );
             return {
               ...team,
-              memberCount: members.length,
+              memberCount: team.members?.length || 0,
               projectCount: projects.length,
             };
           })

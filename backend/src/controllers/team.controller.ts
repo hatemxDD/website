@@ -128,12 +128,16 @@ const teamController = {
               email: true,
             },
           },
-          _count: {
-            select: {
-              members: true,
-              projects: true,
+          members: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                },
+              },
             },
           },
+          projects: true,
         },
       });
 
@@ -431,12 +435,18 @@ const teamController = {
           leaderId: userId,
         },
         include: {
-          _count: {
-            select: {
-              members: true,
-              projects: true,
+          members: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
+                },
+              },
             },
           },
+          projects: true,
         },
       });
 
@@ -457,12 +467,18 @@ const teamController = {
               email: true,
             },
           },
-          _count: {
-            select: {
-              members: true,
-              projects: true,
+          members: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
+                },
+              },
             },
           },
+          projects: true,
         },
       });
 

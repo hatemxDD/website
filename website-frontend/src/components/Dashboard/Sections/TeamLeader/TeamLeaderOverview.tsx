@@ -7,6 +7,7 @@ import {
   TeamMember,
 } from "../../../../services/teamsService";
 import { Link } from "react-router-dom";
+import { ProjectState } from "../../../../services/projectsService";
 
 interface StatCardProps {
   title: string;
@@ -46,11 +47,23 @@ const StatCard: React.FC<StatCardProps> = ({
 };
 
 interface Project {
-  id: string | number;
+  id: number;
   name: string;
-  status: string;
-  deadline: string;
-  progress: number;
+  description?: string | null;
+  state: ProjectState;
+  status?: string;
+  image?: string | null;
+  teamId?: number;
+  createdAt?: string;
+  updatedAt?: string;
+  expectedEndDate?: string | null;
+  deadline?: string;
+  progress?: number;
+  team?: {
+    id: number;
+    name: string;
+    acro: string;
+  };
 }
 
 interface FormattedTeamMember {
@@ -64,9 +77,11 @@ interface FormattedTeamMember {
 interface TeamProject {
   id: number;
   name: string;
+  state?: ProjectState;
   status?: string;
   deadline?: string;
   progress?: number;
+  expectedEndDate?: string | null;
 }
 
 const TeamLeaderOverview: React.FC = () => {
@@ -87,7 +102,7 @@ const TeamLeaderOverview: React.FC = () => {
     if (projects.length === 0) return 0;
 
     const completedProjects = projects.filter(
-      (project) => project.status.toLowerCase() === "completed"
+      (project) => project.state.toLowerCase() === "completed"
     ).length;
 
     return Math.round((completedProjects / projects.length) * 100);
@@ -134,13 +149,13 @@ const TeamLeaderOverview: React.FC = () => {
           // Handle projects (assuming custom field not in the original Team interface)
           const teamProjects = (teamData as any).projects || [];
           if (Array.isArray(teamProjects)) {
-            const formattedProjects = teamProjects.map(
+            const formattedProjects: Project[] = teamProjects.map(
               (project: TeamProject) => ({
                 id: project.id,
                 name: project.name,
-                status: project.status || "In Progress",
+                state: project.state as ProjectState,
                 deadline:
-                  project.deadline ||
+                  project.expectedEndDate ||
                   new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
                 progress: project.progress || Math.floor(Math.random() * 100),
               })
@@ -257,7 +272,7 @@ const TeamLeaderOverview: React.FC = () => {
               title="Active Projects"
               value={
                 recentProjects.filter(
-                  (p) => p.status.toLowerCase() !== "completed"
+                  (p) => p.state.toLowerCase() !== "completed"
                 ).length
               }
               icon={<FileText className="h-6 w-6 text-white" />}
@@ -298,34 +313,56 @@ const TeamLeaderOverview: React.FC = () => {
                 </p>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {recentProjects.map((project) => (
                   <div
                     key={project.id}
-                    className="border-b dark:border-gray-700 pb-4 last:border-b-0 last:pb-0"
+                    className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 hover:shadow-md transition-all"
                   >
-                    <div className="flex justify-between items-center mb-2">
-                      <h3 className="font-medium text-gray-800 dark:text-white">
+                    <div className="flex justify-between items-start mb-3">
+                      <h3 className="font-medium text-gray-800 dark:text-white text-lg">
                         {project.name}
                       </h3>
                       <span
-                        className={`text-xs px-2 py-1 rounded-full ${getStatusColorClass(project.status)}`}
+                        className={`text-xs px-2 py-1 rounded-full ${getStatusColorClass(project.status || project.state)}`}
                       >
-                        {project.status}
+                        {project.status || project.state}
                       </span>
                     </div>
-                    <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 mb-2">
-                      <span>Progress</span>
-                      <span>{project.progress}%</span>
-                    </div>
-                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                      <div
-                        className="bg-blue-600 dark:bg-blue-500 h-2 rounded-full"
-                        style={{ width: `${project.progress}%` }}
-                      />
-                    </div>
-                    <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                      Deadline: {formatDate(project.deadline)}
+                    {project.description && (
+                      <div className="text-sm text-gray-600 dark:text-gray-300 mb-3 line-clamp-2">
+                        {project.description}
+                      </div>
+                    )}
+                    <div className="flex justify-between items-center mt-3 text-xs text-gray-500 dark:text-gray-400">
+                      <span className="flex items-center">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-4 w-4 mr-1"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                          />
+                        </svg>
+                        Deadline:{" "}
+                        {formatDate(
+                          project.deadline ||
+                            project.expectedEndDate ||
+                            new Date().toISOString()
+                        )}
+                      </span>
+                      <Link
+                        to={`/dashboard/TeamLeader/projects/${project.id}`}
+                        className="text-blue-600 dark:text-blue-400 hover:underline"
+                      >
+                        Details
+                      </Link>
                     </div>
                   </div>
                 ))}

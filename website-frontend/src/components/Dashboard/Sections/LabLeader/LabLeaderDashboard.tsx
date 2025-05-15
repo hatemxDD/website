@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate, Outlet } from "react-router-dom";
 import { useAuth } from "../../../../contexts/AuthContext";
+import { useTheme } from "../../../../contexts/ThemeContext";
 import {
   FaHome,
   FaUsers,
@@ -17,17 +18,34 @@ import {
   FaBell,
   FaCog,
   FaPlus,
+  FaBars,
 } from "react-icons/fa";
 
 // Import dashboard sections
 
 const LabLeaderDashboard: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [isDarkMode, setIsDarkMode] = useState(true);
   const [activeSubmenu, setActiveSubmenu] = useState<string | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const { isDarkMode, toggleDarkMode } = useTheme();
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 1024);
+      if (window.innerWidth < 1024) {
+        setIsSidebarOpen(false);
+      } else {
+        setIsSidebarOpen(true);
+      }
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const menuItems = [
     {
@@ -134,6 +152,9 @@ const LabLeaderDashboard: React.FC = () => {
       toggleSubmenu(item.id);
     } else if (item.path) {
       navigate(item.path);
+      if (isMobile) {
+        setIsSidebarOpen(false);
+      }
     }
   };
 
@@ -144,58 +165,84 @@ const LabLeaderDashboard: React.FC = () => {
     return location.pathname.startsWith(path);
   };
 
+  const bgColor = isDarkMode ? "bg-gray-900" : "bg-gray-50";
+  const textColor = isDarkMode ? "text-white" : "text-gray-800";
+
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className={`flex h-screen ${bgColor} transition-colors duration-300`}>
+      {/* Overlay for mobile */}
+      {isMobile && isSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-40"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-64 transform transition-transform duration-300 ease-in-out 
+        className={`fixed inset-y-0 left-0 z-50 w-64 transform transition-all duration-300 ease-in-out 
         ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"} 
-        bg-gradient-to-b from-blue-900 to-blue-800 text-white shadow-xl`}
+        ${
+          isDarkMode
+            ? "bg-gradient-to-br from-blue-950 via-indigo-900 to-blue-800"
+            : "bg-gradient-to-br from-blue-600 via-blue-500 to-indigo-500"
+        } 
+        text-white shadow-2xl`}
       >
         {/* Logo and Brand */}
-        <div className="flex items-center justify-between h-16 px-4 bg-blue-950">
+        <div className="flex items-center justify-between h-16 px-6 bg-opacity-30 backdrop-blur-sm bg-blue-950">
           <div className="flex items-center space-x-3">
-            <FaHome className="w-8 h-8" />
-            <span className="text-lg font-semibold">Research Lab</span>
+            <div className="p-1.5 bg-white bg-opacity-20 rounded-lg backdrop-blur-sm">
+              <FaHome className="w-6 h-6" />
+            </div>
+            <span className="text-lg font-bold tracking-wide">
+              Research Lab
+            </span>
           </div>
         </div>
 
         {/* User Profile */}
-        <div className="p-4 border-b border-blue-700">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-full bg-blue-700 flex items-center justify-center">
+        <div className="p-5 border-b border-blue-700/50">
+          <div className="flex items-center space-x-4">
+            <div className="w-12 h-12 rounded-full ring-2 ring-white/30 bg-gradient-to-br from-blue-400 to-indigo-600 flex items-center justify-center shadow-lg">
               <span className="text-lg font-semibold">
                 {user?.name?.[0] || "U"}
               </span>
             </div>
             <div>
-              <h3 className="font-medium">{user?.name || "User"}</h3>
-              <p className="text-sm text-blue-200">Lab Leader</p>
+              <h3 className="text-xl font-semibold text-white">
+                {user?.name || "User"}
+              </h3>
+              <p className="text-sm text-blue-100 opacity-80">Lab Leader</p>
             </div>
           </div>
         </div>
 
         {/* Navigation */}
-        <nav className="mt-4 px-2">
-          <div className="space-y-1">
+        <nav className="mt-5 px-3 py-2 overflow-y-auto h-[calc(100vh-15rem)]">
+          <div className="space-y-1.5">
             {menuItems.map((item) => (
-              <div key={item.id}>
+              <div key={item.id} className="group">
                 <button
                   onClick={() => handleNavigation(item)}
-                  className={`w-full flex items-center justify-between px-4 py-3 text-sm rounded-lg transition-colors duration-200
+                  className={`w-full flex items-center justify-between px-4 py-2.5 text-sm rounded-xl transition-all duration-200
                     ${
                       isActive(item.path || "")
-                        ? "bg-blue-700 text-white"
-                        : "text-blue-100 hover:bg-blue-700/50"
+                        ? `${isDarkMode ? "bg-blue-700" : "bg-white/20 backdrop-blur-sm"} text-white shadow-md`
+                        : `text-blue-100 hover:bg-white/10 hover:backdrop-blur-sm`
                     }`}
                 >
-                  <div className="flex items-center space-x-3">
-                    <span className="text-xl">{item.icon}</span>
-                    <span>{item.label}</span>
+                  <div className="flex items-center space-x-3.5">
+                    <span
+                      className={`text-xl transition-transform duration-300 ${isActive(item.path || "") ? "scale-110" : "group-hover:scale-110"}`}
+                    >
+                      {item.icon}
+                    </span>
+                    <span className="font-medium">{item.label}</span>
                   </div>
                   {item.submenu && (
                     <FaChevronDown
-                      className={`w-4 h-4 transform transition-transform duration-200 
+                      className={`w-3.5 h-3.5 transform transition-transform duration-200 
                       ${activeSubmenu === item.id ? "rotate-180" : ""}`}
                     />
                   )}
@@ -203,20 +250,20 @@ const LabLeaderDashboard: React.FC = () => {
 
                 {/* Submenu */}
                 {item.submenu && activeSubmenu === item.id && (
-                  <div className="mt-1 ml-4 space-y-1">
+                  <div className="mt-1 ml-6 space-y-1 overflow-hidden animate-fadeIn">
                     {item.submenu.map((subItem) => (
                       <button
                         key={subItem.id}
                         onClick={() => navigate(subItem.path)}
-                        className={`w-full flex items-center px-4 py-2 text-sm rounded-lg transition-colors duration-200
+                        className={`w-full flex items-center px-4 py-2 text-sm rounded-lg transition-all duration-200
                           ${
                             isActive(subItem.path)
-                              ? "bg-blue-700 text-white"
-                              : "text-blue-100 hover:bg-blue-700/50"
+                              ? "bg-blue-600/50 text-white shadow-sm"
+                              : "text-blue-100 hover:bg-white/10"
                           }`}
                       >
-                        <span className="mr-3">{subItem.icon}</span>
-                        {subItem.label}
+                        <span className="mr-3 opacity-70">{subItem.icon}</span>
+                        <span className="font-medium">{subItem.label}</span>
                       </button>
                     ))}
                   </div>
@@ -227,24 +274,14 @@ const LabLeaderDashboard: React.FC = () => {
         </nav>
 
         {/* Bottom Section */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-blue-700">
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-blue-700/30 backdrop-blur-sm bg-blue-900/20">
           <div className="flex items-center justify-between">
             <button
-              onClick={() => setIsDarkMode(!isDarkMode)}
-              className="p-2 rounded-lg hover:bg-blue-700/50 text-blue-100"
-            >
-              {isDarkMode ? (
-                <FaSun className="w-5 h-5" />
-              ) : (
-                <FaMoon className="w-5 h-5" />
-              )}
-            </button>
-            <button
               onClick={handleLogout}
-              className="flex items-center space-x-2 p-2 rounded-lg hover:bg-blue-700/50 text-blue-100"
+              className="flex items-center space-x-2 p-2.5 rounded-lg hover:bg-blue-700/50 text-blue-100 transition-colors duration-200 w-full justify-center"
             >
               <FaSignOutAlt className="w-5 h-5" />
-              <span>Logout</span>
+              <span className="font-medium">Logout</span>
             </button>
           </div>
         </div>
@@ -252,34 +289,30 @@ const LabLeaderDashboard: React.FC = () => {
 
       {/* Main Content */}
       <div
-        className={`flex-1 ${isSidebarOpen ? "ml-64" : "ml-0"} transition-margin duration-300`}
+        className={`flex-1 ${isSidebarOpen && !isMobile ? "ml-64" : "ml-0"} transition-all duration-300`}
       >
         {/* Header */}
-        <header className="bg-white shadow-sm h-16 flex items-center px-6">
-          <button
-            className="lg:hidden focus:outline-none"
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          >
-            {/* Hamburger Icon */}
-            <svg
-              className="w-6 h-6 text-gray-700"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+        <header
+          className={`${isDarkMode ? "bg-gray-800 text-white" : "bg-white text-gray-800"} shadow-md h-16 flex items-center justify-between px-6 sticky top-0 z-10 transition-colors duration-300`}
+        >
+          <div className="flex items-center">
+            <button
+              className="focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-md p-1"
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              aria-label="Toggle sidebar"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M4 6h16M4 12h16M4 18h16"
+              <FaBars
+                className={`w-6 h-6 ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}
               />
-            </svg>
-          </button>
-          <h1 className="text-xl font-medium text-gray-800 ml-4">Dashboard</h1>
+            </button>
+            <h1 className="text-xl font-semibold ml-4">Dashboard</h1>
+          </div>
         </header>
 
         {/* Page Content */}
-        <main className="p-6">
+        <main
+          className={`p-6 transition-colors duration-300 ${isDarkMode ? "text-gray-200" : "text-gray-800"}`}
+        >
           <Outlet />
         </main>
       </div>

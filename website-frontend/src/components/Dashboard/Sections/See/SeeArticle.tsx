@@ -41,11 +41,11 @@ const SeeArticle: React.FC = () => {
   }, []);
 
   const handleAddArticle = () => {
-    navigate("/dashboard/LabLeader/articles/add");
+      navigate(`/dashboard/${user?.role}/articles/add`);
   };
 
   const handleEditArticle = (id: number) => {
-    navigate(`/dashboard/LabLeader/articles/edit/${id}`);
+    navigate(`/dashboard/${user?.role}/articles/edit/${id}`);
   };
 
   const handleViewArticle = (id: number) => {

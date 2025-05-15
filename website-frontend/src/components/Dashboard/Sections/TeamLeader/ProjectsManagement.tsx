@@ -1,464 +1,340 @@
-import React, { useState } from 'react';
-import { FaPlus, FaEdit, FaTrash, FaSearch, FaUsers, FaCheckCircle, FaClock, FaExclamationCircle } from 'react-icons/fa';
-import { Project, Member } from '../../../../types';
+import React, { useState, useEffect } from "react";
+import {
+  Search,
+  Plus,
+  Edit2,
+  Trash2,
+  AlertCircle,
+  Calendar,
+  Users,
+  BadgeCheck,
+  Clock,
+  AlertTriangle,
+  Loader,
+} from "lucide-react";
+import { useAuth } from "../../../../contexts/AuthContext";
+import {
+  projectsService,
+  Project,
+  ProjectState,
+} from "../../../../services/projectsService";
+import {
+  teamsService,
+  Team,
+  MyTeamsResponse,
+} from "../../../../services/teamsService";
+import { useNavigate } from "react-router-dom";
 
-interface ProjectWithMembers extends Project {
-  teamMembers: Member[];
-}
+const statusLabels: Record<ProjectState, string> = {
+  PLANNING: "Planning",
+  IN_PROGRESS: "In Progress",
+  COMPLETED: "Completed",
+  ON_HOLD: "On Hold",
+  CANCELLED: "Cancelled",
+};
 
-interface ProjectsManagementProps {
-  mode?: 'view' | 'add';
-}
+const ProjectsManagement: React.FC = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
-const ProjectsManagement: React.FC<ProjectsManagementProps> = ({ mode = 'view' }) => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [currentProject, setCurrentProject] = useState<ProjectWithMembers | null>(null);
-  const [newProject, setNewProject] = useState<Partial<ProjectWithMembers>>({
-    title: '',
-    description: '',
-    startDate: new Date(),
-    endDate: new Date(),
-    status: 'active',
-    photo: '',
-    result: '',
-    teamMembers: []
-  });
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [expandedProject, setExpandedProject] = useState<number | null>(null);
+  const [team, setTeam] = useState<Team | null>(null);
 
-  const [availableMembers] = useState<Member[]>([
-    { 
-      id: '1', 
-      name: 'John Doe', 
-      email: 'john.doe@example.com',
-      dateOfBirth: new Date(),
-      sex: 'male',
-      grade: 'PhD',
-      degree: 'Computer Science',
-      specialty: 'AI',
-      photo: '',
-      password: '',
-      username: 'johndoe',
-      type: 'member'
-    },
-    { 
-      id: '2', 
-      name: 'Jane Smith', 
-      email: 'jane.smith@example.com',
-      dateOfBirth: new Date(),
-      sex: 'female',
-      grade: 'PhD',
-      degree: 'Physics',
-      specialty: 'Quantum Computing',
-      photo: '',
-      password: '',
-      username: 'janesmith',
-      type: 'member'
-    }
-  ]);
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      setError(null);
 
-  const [projects, setProjects] = useState<ProjectWithMembers[]>([
-    {
-      id: '1',
-      title: 'AI Research Project',
-      description: 'Advanced AI research project focusing on machine learning',
-      startDate: new Date(),
-      endDate: new Date(),
-      status: 'active',
-      photo: '',
-      result: 'In progress',
-      teamMembers: [availableMembers[0], availableMembers[1]],
-      members: [availableMembers[0], availableMembers[1]]
-    }
-  ]);
+      try {
+        // Get teams led by the current user
+        const myTeamsResponse = await teamsService.getMyTeams();
 
-  const handleEditProject = (project: ProjectWithMembers) => {
-    setCurrentProject(project);
-    setNewProject({...project});
-    setShowEditModal(true);
-  };
+        const leadTeams = myTeamsResponse.led;
 
-  const handleDeleteProject = (projectId: string) => {
-    if (window.confirm('Are you sure you want to delete this project?')) {
-      setProjects(projects.filter(p => p.id !== projectId));
-    }
-  };
+        if (leadTeams.length === 0) {
+          setError("You are not leading any teams.");
+          setIsLoading(false);
+          return;
+        }
 
-  const handleAddProject = () => {
-    if (newProject.title && newProject.description) {
-    const project: ProjectWithMembers = {
-        id: `proj-${Date.now()}`,
-        title: newProject.title,
-        description: newProject.description,
-        startDate: newProject.startDate || new Date(),
-        endDate: newProject.endDate || new Date(),
-        status: newProject.status || 'active',
-      photo: newProject.photo || '',
-        result: newProject.result || '',
-        teamMembers: newProject.teamMembers || [],
-        members: newProject.teamMembers || []
+        // Get the first team the user leads (can be expanded to select from multiple teams)
+        const currentTeam = leadTeams[0];
+
+        setTeam(currentTeam);
+
+        // Get all projects for this team
+        const teamProjects = await projectsService.getByTeam(currentTeam.id);
+        
+
+        setProjects(teamProjects);
+      } catch (err) {
+        console.error("Error fetching data:", err);
+        setError("Failed to load projects. Please try again later.");
+      } finally {
+        setIsLoading(false);
+      }
     };
 
-    setProjects([...projects, project]);
-    setShowAddModal(false);
-    setNewProject({
-        title: '',
-      description: '',
-        startDate: new Date(),
-        endDate: new Date(),
-        status: 'active',
-      photo: '',
-        result: '',
-      teamMembers: []
-    });
+    fetchData();
+  }, [user]);
+
+  const filteredProjects = projects.filter(
+    (project) =>
+      project.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (project.description &&
+        project.description
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase())) ||
+      statusLabels[project.state]
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase())
+  );
+
+  const handleAddProject = () => {
+    // Navigate to add project page or open modal
+    navigate("/dashboard/TeamLeader/projects/add");
+  };
+
+  const handleEditProject = (projectId: number) => {
+    navigate(`/dashboard/TeamLeader/projects/edit/${projectId}`);
+  };
+
+  const handleDeleteProject = async (projectId: number) => {
+    if (window.confirm("Are you sure you want to delete this project?")) {
+      try {
+        await projectsService.delete(projectId);
+        setProjects(projects.filter((project) => project.id !== projectId));
+      } catch (err) {
+        console.error("Error deleting project:", err);
+        alert("Failed to delete project. Please try again.");
+      }
     }
   };
 
-  const handleUpdateProject = () => {
-    if (currentProject && newProject.title && newProject.description) {
-      const updatedProjects = projects.map(project => {
-        if (project.id === currentProject.id) {
-          return {
-            ...project,
-            title: newProject.title || project.title,
-            description: newProject.description || project.description,
-            startDate: newProject.startDate || project.startDate,
-            endDate: newProject.endDate || project.endDate,
-            status: newProject.status || project.status,
-            photo: newProject.photo || project.photo,
-            result: newProject.result || project.result,
-            teamMembers: newProject.teamMembers || project.teamMembers,
-            members: newProject.teamMembers || project.members
-          };
-        }
-        return project;
-      });
-
-      setProjects(updatedProjects);
-    setShowEditModal(false);
-    setCurrentProject(null);
-    setNewProject({
-        title: '',
-      description: '',
-        startDate: new Date(),
-        endDate: new Date(),
-        status: 'active',
-      photo: '',
-        result: '',
-      teamMembers: []
-    });
-    }
+  const toggleProjectExpansion = (projectId: number) => {
+    setExpandedProject(expandedProject === projectId ? null : projectId);
   };
 
-  const getStatusIcon = (status: string) => {
+  const getStatusIcon = (status: ProjectState) => {
     switch (status) {
-      case 'Completed':
-        return <FaCheckCircle className="text-green-500" />;
-      case 'In Progress':
-        return <FaClock className="text-blue-500" />;
-      case 'To Do':
-        return <FaExclamationCircle className="text-yellow-500" />;
+      case "IN_PROGRESS":
+        return <Clock size={16} className="text-green-500" />;
+      case "COMPLETED":
+        return <BadgeCheck size={16} className="text-blue-500" />;
+      case "ON_HOLD":
+        return <AlertTriangle size={16} className="text-amber-500" />;
+      case "PLANNING":
+        return <Calendar size={16} className="text-purple-500" />;
+      case "CANCELLED":
+        return <Trash2 size={16} className="text-red-500" />;
       default:
         return null;
     }
   };
 
+  const getStatusBadgeClass = (status: ProjectState) => {
+    switch (status) {
+      case "IN_PROGRESS":
+        return "bg-green-100 text-green-800";
+      case "COMPLETED":
+        return "bg-blue-100 text-blue-800";
+      case "ON_HOLD":
+        return "bg-amber-100 text-amber-800";
+      case "PLANNING":
+        return "bg-purple-100 text-purple-800";
+      case "CANCELLED":
+        return "bg-red-100 text-red-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader className="animate-spin h-8 w-8 text-primary" />
+        <span className="ml-2">Loading projects...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start">
+        <AlertCircle className="text-red-500 mr-3 mt-0.5" size={20} />
+        <div>
+          <h3 className="font-medium text-red-800">Error</h3>
+          <p className="text-red-700">{error}</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="p-6">
+    <div className="projects-management-container">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-800 dark:text-white">
-          {mode === 'add' ? 'Create New Project' : 'Projects Management'}
+        <h2 className="text-2xl font-bold text-gray-800">
+          {team ? `${team.name} Projects` : "Team Projects"}
         </h2>
-        {mode === 'add' && (
         <button
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
-          onClick={() => setShowAddModal(true)}
+          onClick={handleAddProject}
+          className="btn-primary flex items-center"
         >
-            <FaPlus /> Add Project
+          <Plus size={18} className="mr-1" />
+          Add Project
         </button>
-        )}
       </div>
 
-      <div className="mb-6 flex gap-4">
-        <div className="flex-1">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search projects..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <FaSearch className="absolute right-3 top-3 text-gray-400" />
-          </div>
+      <div className="mb-6 relative">
+        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <Search size={18} className="text-gray-400" />
         </div>
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        <input
+          type="text"
+          placeholder="Search projects..."
+          className="form-input pl-10 w-full"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+      </div>
+
+      {filteredProjects.length === 0 ? (
+        <div className="text-center py-8 bg-gray-50 rounded-lg">
+          <h3 className="text-lg font-medium text-gray-600">
+            No projects found
+          </h3>
+          <p className="text-gray-500 mt-2">
+            {searchQuery
+              ? "No projects match your search criteria."
+              : "Your team doesn't have any projects yet."}
+          </p>
+          <button
+            onClick={handleAddProject}
+            className="mt-4 btn-secondary flex items-center mx-auto"
           >
-            <option value="all">All Status</option>
-            <option value="active">Active</option>
-            <option value="completed">Completed</option>
-            <option value="on-hold">On Hold</option>
-          </select>
-        </div>
-
-      {mode === 'add' ? (
-        <div className="bg-white rounded-lg p-6 shadow-lg">
-          <form className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Project Name</label>
-              <input
-                type="text"
-                value={newProject.title || ''}
-                onChange={(e) => setNewProject(prev => ({ ...prev, title: e.target.value }))}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                placeholder="Enter project name"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Description</label>
-              <textarea
-                rows={3}
-                value={newProject.description || ''}
-                onChange={(e) => setNewProject(prev => ({ ...prev, description: e.target.value }))}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                placeholder="Enter project description"
-              />
-      </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Team Members</label>
-              <select
-                multiple
-                value={newProject.teamMembers?.map(m => m.id) || []}
-                onChange={(e) => {
-                  const selectedMembers = Array.from(e.target.selectedOptions, option => 
-                    availableMembers.find(m => m.id === option.value)
-                  ).filter((m): m is Member => m !== undefined);
-                  setNewProject(prev => ({ ...prev, teamMembers: selectedMembers }));
-                }}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              >
-                {availableMembers.map(member => (
-                  <option key={member.id} value={member.id}>
-                    {member.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Deadline</label>
-              <input
-                type="date"
-                value={newProject.startDate?.toISOString().split('T')[0] || ''}
-                onChange={(e) => setNewProject(prev => ({ ...prev, startDate: new Date(e.target.value) }))}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              />
-            </div>
-                <button
-              type="submit"
-              className="w-full bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors duration-300"
-              onClick={handleAddProject}
-                >
-              Create Project
-                </button>
-          </form>
+            <Plus size={16} className="mr-1" />
+            Create First Project
+          </button>
         </div>
       ) : (
-        projects.length === 0 ? (
-          <div className="text-center py-8">
-            <p className="text-gray-500">No projects found. Create your first project!</p>
-          </div>
-        ) : (
-          <div className="space-y-6">
-            {projects
-              .filter(project => 
-                project.title.toLowerCase().includes(searchTerm.toLowerCase()) &&
-                (statusFilter === 'all' || project.status === statusFilter)
-              )
-              .map((project) => (
-                <div key={project.id} className="bg-white rounded-lg p-6 shadow-lg">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center space-x-2">
-                      {getStatusIcon(project.status)}
-                      <h2 className="text-xl font-semibold">{project.title}</h2>
-                    </div>
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium 
-                      ${project.status === 'Completed' ? 'bg-green-100 text-green-800' : 
-                        project.status === 'In Progress' ? 'bg-blue-100 text-blue-800' : 
-                        'bg-yellow-100 text-yellow-800'}`}
+        <div className="bg-white rounded-lg shadow overflow-hidden">
+          {filteredProjects.map((project) => (
+            <div
+              key={project.id}
+              className="border-b border-gray-200 last:border-b-0"
+            >
+              <div
+                className="p-4 flex items-center justify-between cursor-pointer hover:bg-gray-50"
+                onClick={() => toggleProjectExpansion(project.id)}
+              >
+                <div className="flex items-center">
+                  <div className="mr-3">{getStatusIcon(project.state)}</div>
+                  <div>
+                    <h3 className="font-medium text-gray-900">
+                      {project.name}
+                    </h3>
+                    <span
+                      className={`text-xs px-2 py-1 rounded-full mt-1 inline-flex items-center ${getStatusBadgeClass(project.state)}`}
                     >
-                      {project.status}
+                      {getStatusIcon(project.state)}
+                      <span className="ml-1">
+                        {statusLabels[project.state]}
+                      </span>
                     </span>
                   </div>
-                  
-                  <p className="text-gray-600 mb-4">{project.description}</p>
-                  
-                  <div className="grid grid-cols-2 gap-4 mb-4">
+                </div>
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleEditProject(project.id);
+                    }}
+                    className="p-1 text-gray-500 hover:text-blue-600"
+                    title="Edit project"
+                  >
+                    <Edit2 size={16} />
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteProject(project.id);
+                    }}
+                    className="p-1 text-gray-500 hover:text-red-600"
+                    title="Delete project"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              </div>
+
+              {expandedProject === project.id && (
+                <div className="px-4 pb-4 bg-gray-50">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <p className="text-sm text-gray-500">Team Members</p>
-                      <p className="font-medium">{project.teamMembers.map(m => m.name).join(', ')}</p>
+                      <h4 className="text-sm font-medium text-gray-500 mb-1">
+                        Description
+                      </h4>
+                      <p className="text-gray-700">
+                        {project.description || "No description available"}
+                      </p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500">Deadline</p>
-                      <p className="font-medium">{new Date(project.startDate).toLocaleDateString()}</p>
-              </div>
-            </div>
-
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm text-gray-500">
-                      <span>Progress</span>
-                      <span>{project.result === 'completed' ? '100%' : 'In Progress'}</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div
-                        className="bg-blue-500 rounded-full h-2 transition-all duration-300"
-                        style={{ width: project.result === 'completed' ? '100%' : '65%' }}
-                />
-              </div>
-            </div>
-
-                  <div className="mt-4 flex justify-end space-x-2">
-                    <button
-                      className="px-4 py-2 text-blue-600 hover:text-blue-800"
-                      onClick={() => handleEditProject(project)}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                    >
-                      Update Status
-                  </button>
+                      <h4 className="text-sm font-medium text-gray-500 mb-1">
+                        Dates
+                      </h4>
+                      <div className="flex items-center text-gray-700">
+                        <Calendar size={14} className="mr-1" />
+                        <span>Created: {formatDate(project.createdAt)}</span>
+                      </div>
+                      <div className="flex items-center text-gray-700 mt-1">
+                        <Calendar size={14} className="mr-1" />
+                        <span>Updated: {formatDate(project.updatedAt)}</span>
+                      </div>
+                      <div className="flex items-center text-gray-700 mt-1">
+                        <Calendar size={14} className="mr-1" />
+                        <span>
+                          Expected End:{" "}
+                          {project.expectedEndDate
+                            ? formatDate(project.expectedEndDate)
+                            : "Not set"}
+                        </span>
+                      </div>
+                    </div>
                   </div>
+
+                  {project.team && (
+                    <div className="mt-4">
+                      <h4 className="text-sm font-medium text-gray-500 mb-1">
+                        Team
+                      </h4>
+                      <div className="flex items-center text-gray-700">
+                        <Users size={14} className="mr-1" />
+                        <span>
+                          {project.team.name} ({project.team.acro})
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              ))}
-          </div>
-        )
-      )}
-
-      {/* Edit Project Modal */}
-      {showEditModal && currentProject && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md">
-            <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-4">Edit Project</h3>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Project Title
-                </label>
-                <input
-                  type="text"
-                  value={newProject.title || ''}
-                  onChange={(e) => setNewProject(prev => ({ ...prev, title: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Enter project title"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Description
-                </label>
-                <textarea
-                  value={newProject.description || ''}
-                  onChange={(e) => setNewProject(prev => ({ ...prev, description: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  rows={3}
-                  placeholder="Enter project description"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Start Date
-                </label>
-                <input
-                  type="date"
-                    value={newProject.startDate?.toISOString().split('T')[0] || ''}
-                    onChange={(e) => setNewProject(prev => ({ ...prev, startDate: new Date(e.target.value) }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  End Date
-                </label>
-                <input
-                  type="date"
-                    value={newProject.endDate?.toISOString().split('T')[0] || ''}
-                    onChange={(e) => setNewProject(prev => ({ ...prev, endDate: new Date(e.target.value) }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Status
-                </label>
-                <select
-                  value={newProject.status || 'active'}
-                  onChange={(e) => setNewProject(prev => ({ ...prev, status: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="active">Active</option>
-                  <option value="completed">Completed</option>
-                  <option value="on-hold">On Hold</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Team Members
-                </label>
-                <select
-                  multiple
-                  value={newProject.teamMembers?.map(m => m.id) || []}
-                  onChange={(e) => {
-                    const selectedMembers = Array.from(e.target.selectedOptions, option => 
-                      availableMembers.find(m => m.id === option.value)
-                    ).filter((m): m is Member => m !== undefined);
-                    setNewProject(prev => ({ ...prev, teamMembers: selectedMembers }));
-                  }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  {availableMembers.map(member => (
-                    <option key={member.id} value={member.id}>
-                      {member.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              )}
             </div>
-
-            <div className="mt-6 flex justify-end space-x-3">
-              <button
-                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-                onClick={() => {
-                  setShowEditModal(false);
-                  setCurrentProject(null);
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                onClick={handleUpdateProject}
-              >
-                Update Project
-              </button>
-            </div>
-          </div>
+          ))}
         </div>
       )}
     </div>
   );
 };
 
-export default ProjectsManagement; 
+export default ProjectsManagement;

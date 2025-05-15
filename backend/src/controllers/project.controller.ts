@@ -20,6 +20,7 @@ interface CreateProjectRequest {
   state?: ProjectState;
   image?: string;
   teamId: number;
+  expectedEndDate?: Date;
 }
 
 interface UpdateProjectRequest {
@@ -28,6 +29,7 @@ interface UpdateProjectRequest {
   state?: ProjectState;
   image?: string;
   teamId?: number;
+  expectedEndDate?: Date;
 }
 
 // Project Controller
@@ -40,8 +42,14 @@ const projectController = {
         return;
       }
 
-      const { name, description, state, image, teamId }: CreateProjectRequest =
-        req.body;
+      const {
+        name,
+        description,
+        state,
+        image,
+        teamId,
+        expectedEndDate,
+      }: CreateProjectRequest = req.body;
 
       // Check if the team exists
       const team = await prisma.team.findUnique({
@@ -70,7 +78,8 @@ const projectController = {
           description,
           state: state || "PLANNING",
           image,
-          teamId:Number(teamId),
+          teamId: Number(teamId),
+          expectedEndDate,
         },
       });
 

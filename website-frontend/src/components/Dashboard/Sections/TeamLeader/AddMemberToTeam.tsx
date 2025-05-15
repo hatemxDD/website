@@ -4,6 +4,7 @@ import { FaSearch, FaUserPlus } from "react-icons/fa";
 import { usersService, User } from "../../../../services/usersService";
 import { teamsService } from "../../../../services/teamsService";
 import { Role } from "../../../../types/type";
+import { useAuth } from "../../../../contexts/AuthContext";
 
 interface Member {
   id: number;
@@ -21,6 +22,7 @@ const AddMemberToTeam = () => {
   const [selectedMembers, setSelectedMembers] = useState<number[]>([]);
   const [currentTeam, setCurrentTeam] = useState<number | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const { user: currentUser } = useAuth();
 
   const navigate = useNavigate();
 
@@ -31,15 +33,12 @@ const AddMemberToTeam = () => {
         setLoading(true);
         setError(null);
 
-        // 1. Get current user and verify team leader role
-        const currentUser = await usersService.getProfile();
-        if (currentUser.role !== Role.TeamLeader) {
-          setError("You must be a team leader to access this page.");
-          return;
-        }
-
-        // 2. Get current team
+        // Get all users
+        const users = await usersService.getAll();
+        const allTeamMembers = await teamsService.getAllTeamMembers();
         const myTeams = await teamsService.getMyTeams();
+
+        // Get current team
         if (!myTeams.led?.[0]?.id) {
           setError(
             "You don't have a team assigned. Please contact the administrator."
@@ -49,33 +48,24 @@ const AddMemberToTeam = () => {
         const currentTeam = myTeams.led[0];
         setCurrentTeam(currentTeam.id);
 
-        // 3. Get all users and teams in parallel
-        const [allUsers, allTeams] = await Promise.all([
-          usersService.getAll(),
-          teamsService.getAll(),
-        ]);
-        // 4. Create a map of all team members across all teams
-        const teamMembersMap = new Map<number, boolean>();
-        allTeams.forEach((team) => {
-          team.members?.forEach((member) => {
-            teamMembersMap.set(member.userId, true);
-          });
+        // Create a set of all user IDs who are already in any team
+        const existingMemberIds = new Set<number>();
+
+        // Add all existing team members to the set
+        allTeamMembers.forEach((member) => {
+          if (member.user && member.user.id) {
+            existingMemberIds.add(member.user.id);
+          }
         });
 
-        // 5. Filter available team members
-        const availableTeamMembers = allUsers
-          .filter((user) => {
-            // Must be a team member
-            if (user.role !== Role.TeamMember) return false;
-
-            // Must not be the current user
-            if (user.id === currentUser.id) return false;
-
-            // Must not be in any team
-            if (teamMembersMap.has(user.id)) return false;
-
-            return true;
-          })
+        // Filter users to get only TeamMembers who are not in any team and not the current user
+        const availableTeamMembers = users
+          .filter(
+            (user: User) =>
+              user.role === "TeamMember" &&
+              user.id !== currentUser?.id &&
+              !existingMemberIds.has(user.id)
+          )
           .map((user) => ({
             id: user.id,
             name: user.name,
@@ -83,7 +73,6 @@ const AddMemberToTeam = () => {
             role: user.role,
           }));
 
-        console.log("Available team members:", availableTeamMembers);
         setMembers(availableTeamMembers);
       } catch (err) {
         console.error("Error fetching data:", err);
@@ -94,7 +83,7 @@ const AddMemberToTeam = () => {
     };
 
     fetchData();
-  }, []);
+  }, [currentUser?.id]);
 
   // Handle search input change
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -129,7 +118,7 @@ const AddMemberToTeam = () => {
       // Add each selected member to the team
       const addPromises = selectedMembers.map((memberId) =>
         teamsService.addMember(currentTeam, {
-          userId: memberId, // This userId will be used as the TeamMember id
+          userId: memberId,
           email: "",
         })
       );

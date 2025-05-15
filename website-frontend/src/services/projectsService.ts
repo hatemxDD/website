@@ -16,6 +16,7 @@ export interface Project {
   teamId: number;
   createdAt: string;
   updatedAt: string;
+  expectedEndDate: string | null;
   team?: {
     id: number;
     name: string;
@@ -29,6 +30,7 @@ export interface CreateProjectData {
   state?: ProjectState;
   image?: string;
   teamId: number;
+  expectedEndDate?: Date;
 }
 
 export interface UpdateProjectData {
@@ -37,6 +39,7 @@ export interface UpdateProjectData {
   state?: ProjectState;
   image?: string;
   teamId?: number;
+  expectedEndDate?: Date;
 }
 
 export const projectsService = {
@@ -71,7 +74,7 @@ export const projectsService = {
    * Get projects by team ID
    */
   getByTeam: (teamId: number) =>
-    api.get<Project[]>(`/api/teams/${teamId}/projects`),
+    api.get<Project[]>(`/api/projects/team/${teamId}`),
 
   /**
    * Get projects by state

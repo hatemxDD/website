@@ -27,6 +27,7 @@ import MemberDashboard from "./components/Dashboard/Sections/Member/MemberDashbo
 import DashboardOverview from "./components/Dashboard/Sections/DashboardOverview";
 import SeeMembers from "./components/Dashboard/Sections/See/SeeMembers";
 import AddMember from "./components/Dashboard/Sections/Create/AddMember";
+import AddProject from "./components/Dashboard/Sections/Create/AddProject";
 import EditMember from "./components/Dashboard/Sections/Edit/EditMember";
 import LabLeaderProjects from "./components/Dashboard/Sections/See/SeeProjects";
 import LabLeaderPublications from "./components/Dashboard/Sections/PublicationsManagement";
@@ -46,7 +47,7 @@ import PublicationsManagement from "./components/Dashboard/Sections/TeamLeader/P
 import AddMemberToTeam from "./components/Dashboard/Sections/TeamLeader/AddMemberToTeam";
 
 // Import Member sections
-import MemberOverview from "./components/Dashboard/Sections/MemberOverview";
+import MemberOverview from "./components/Dashboard/Sections/Member/MemberOverview";
 import MemberProjects from "./components/Dashboard/Sections/Member/MemberProjects";
 
 // Import new components
@@ -141,9 +142,6 @@ const AppRoutes = () => {
         <Route path="teams/edit/:id" element={<SeeTeams />} />
         <Route path="teams/remove/:id" element={<SeeTeams />} />
         <Route path="projects" element={<LabLeaderProjects />} />
-        <Route path="projects/add" element={<LabLeaderProjects />} />
-        <Route path="projects/tasks" element={<LabLeaderProjects />} />
-        <Route path="projects/timeline" element={<LabLeaderProjects />} />
         <Route path="articles" element={<SeeArticle />} />
         <Route path="articles/add" element={<AddArticle />} />
         <Route path="articles/edit/:id" element={<AddArticle />} />
@@ -172,9 +170,7 @@ const AppRoutes = () => {
         <Route path="my-team/add" element={<AddMemberToTeam />} />
         <Route path="my-team/remove" element={<TeamManagement />} />
         <Route path="projects" element={<ProjectsManagement />} />
-        <Route path="projects/add" element={<ProjectsManagement />} />
-        <Route path="projects/tasks" element={<ProjectsManagement />} />
-        <Route path="projects/timeline" element={<ProjectsManagement />} />
+        <Route path="projects/add" element={<AddProject />} />
         <Route path="articles" element={<SeeArticle />} />
         <Route path="articles/add" element={<AddArticle />} />
         <Route path="articles/edit/:id" element={<AddArticle />} />
@@ -198,6 +194,7 @@ const AppRoutes = () => {
         <Route index element={<Navigate to="overview" replace />} />
         <Route path="overview" element={<MemberOverview />} />
         <Route path="projects" element={<MemberProjects />} />
+        <Route path="team-projects" element={<MemberProjects />} />
         <Route path="publications" element={<Publications />} />
         <Route path="news" element={<SeeNews />} />
         <Route path="profile" element={<Profile />} />

@@ -1,67 +1,62 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Save, AlertCircle, Loader2 } from "lucide-react";
-import { teamsService } from "../../../../services/teamsService";
-import { usersService, User } from "../../../../services/usersService";
+import {
+  projectsService,
+  ProjectState,
+} from "../../../../services/projectsService";
+import { teamsService, Team } from "../../../../services/teamsService";
 import { useAuth } from "../../../../contexts/AuthContext";
 
-const AddTeam: React.FC = () => {
+const AddProject: React.FC = () => {
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
 
   const [formData, setFormData] = useState({
     name: "",
     description: "",
-    acro: "",
-    leaderId: currentUser?.id.toString() || "",
+    state: "PLANNING" as ProjectState,
+    teamId: "",
+    expectedEndDate: "",
   });
 
-  const [availableMembers, setAvailableMembers] = useState<User[]>([]);
-  const [selectedMembers, setSelectedMembers] = useState<number[]>([]);
+  const [leadingTeams, setLeadingTeams] = useState<Team[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
-  const [loadingMembers, setLoadingMembers] = useState(true);
+  const [loadingTeams, setLoadingTeams] = useState(true);
   const [successMessage, setSuccessMessage] = useState("");
 
-  // Fetch available members
+  // Fetch teams led by the current user
   useEffect(() => {
-    const fetchMembers = async () => {
+    const fetchTeams = async () => {
       try {
-        setLoadingMembers(true);
-        // Fetch all users
-        const users = await usersService.getAll();
-        const allTeamMembers = await teamsService.getAllTeamMembers();
-        // Create a set of all user IDs who are already in any team
-        const existingMemberIds = new Set<number>();
+        setLoadingTeams(true);
+        if (currentUser?.id) {
+          // Fetch all teams the user is involved with
+          const myTeams = await teamsService.getMyTeams();
+          // Get only the teams where the user is a leader
+          setLeadingTeams(myTeams.led || []);
 
-        // Add all existing team members to the set
-        allTeamMembers.forEach((member) => {
-          if (member.user && member.user.id) {
-            existingMemberIds.add(member.user.id);
+          // Set default teamId if there's at least one team
+          if (myTeams.led && myTeams.led.length > 0) {
+            setFormData((prev) => ({
+              ...prev,
+              teamId: myTeams.led[0].id.toString(),
+            }));
           }
-        });
-        // Filter users to get only TeamMembers who are not in any team and not the current user
-        const teamMembers = users.filter(
-          (user: User) =>
-            user.role === "TeamMember" &&
-            user.id !== currentUser?.id &&
-            !existingMemberIds.has(user.id)
-        );
-
-        setAvailableMembers(teamMembers);
-        setErrors({});
+        }
       } catch (error) {
-        console.error("Error fetching members:", error);
+        console.error("Error fetching teams:", error);
         setErrors((prev) => ({
           ...prev,
-          members: "Failed to load members. Please try again later.",
+          teams: "Failed to load teams. Please try again later.",
         }));
       } finally {
-        setLoadingMembers(false);
+        setLoadingTeams(false);
       }
     };
 
-    fetchMembers();
+    fetchTeams();
   }, [currentUser?.id]);
 
   const handleChange = (
@@ -83,27 +78,29 @@ const AddTeam: React.FC = () => {
     }
   };
 
-  const handleMemberToggle = (memberId: number) => {
-    setSelectedMembers((prev) =>
-      prev.includes(memberId)
-        ? prev.filter((id) => id !== memberId)
-        : [...prev, memberId]
-    );
-  };
-
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
     if (!formData.name.trim()) {
-      newErrors.name = "Team name is required";
+      newErrors.name = "Project name is required";
     }
 
     if (!formData.description.trim()) {
       newErrors.description = "Description is required";
     }
 
-    if (!formData.acro.trim()) {
-      newErrors.acro = "Team acronym is required";
+    if (!formData.teamId) {
+      newErrors.teamId = "Team selection is required";
+    }
+
+    if (formData.expectedEndDate) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const endDate = new Date(formData.expectedEndDate);
+
+      if (endDate < today) {
+        newErrors.expectedEndDate = "Expected end date cannot be before today";
+      }
     }
 
     setErrors(newErrors);
@@ -121,40 +118,36 @@ const AddTeam: React.FC = () => {
     setSuccessMessage("");
 
     try {
-      // First create the team
-      const createdTeam = await teamsService.create({
+      // Create the project
+      await projectsService.create({
         name: formData.name,
         description: formData.description,
-        acro: formData.acro,
-        leaderId: parseInt(formData.leaderId),
+        state: formData.state,
+        teamId: parseInt(formData.teamId),
+        expectedEndDate: formData.expectedEndDate
+          ? new Date(formData.expectedEndDate)
+          : undefined,
       });
 
-      // Then add all the selected members to the team
-      await Promise.all(
-        selectedMembers.map((userId) =>
-          teamsService.addMember(createdTeam.id, { userId, email: "" })
-        )
-      );
-
-      setSuccessMessage("Team created successfully!");
+      setSuccessMessage("Project created successfully!");
 
       // Reset form after successful submission
       setFormData({
         name: "",
         description: "",
-        acro: "",
-        leaderId: currentUser?.id.toString() || "",
+        state: "PLANNING",
+        teamId: leadingTeams.length > 0 ? leadingTeams[0].id.toString() : "",
+        expectedEndDate: "",
       });
-      setSelectedMembers([]);
 
       // Navigate back after a short delay to show the success message
       setTimeout(() => {
-        navigate("/dashboard/TeamLeader/my-team");
+        navigate("/dashboard/TeamLeader/projects");
       }, 1500);
     } catch (error) {
-      console.error("Error creating team:", error);
+      console.error("Error creating project:", error);
       setErrors({
-        submit: "Failed to create team. Please try again.",
+        submit: "Failed to create project. Please try again.",
       });
     } finally {
       setIsLoading(false);
@@ -165,14 +158,14 @@ const AddTeam: React.FC = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-gray-800 dark:text-white">
-          Add New Team
+          Add New Project
         </h2>
         <button
-          onClick={() => navigate("/dashboard/LabLeader/teams")}
+          onClick={() => navigate("/dashboard/TeamLeader/projects")}
           className="flex items-center px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Teams
+          Back to Projects
         </button>
       </div>
 
@@ -198,7 +191,7 @@ const AddTeam: React.FC = () => {
                 htmlFor="name"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
               >
-                Team Name*
+                Project Name*
               </label>
               <input
                 type="text"
@@ -209,36 +202,11 @@ const AddTeam: React.FC = () => {
                 className={`w-full p-3 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white ${
                   errors.name ? "border-red-500" : "border-gray-300"
                 }`}
-                placeholder="Enter team name"
+                placeholder="Enter project name"
               />
               {errors.name && (
                 <p className="mt-1 text-sm text-red-600 dark:text-red-400">
                   {errors.name}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <label
-                htmlFor="acro"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-              >
-                Team Acronym*
-              </label>
-              <input
-                type="text"
-                id="acro"
-                name="acro"
-                value={formData.acro}
-                onChange={handleChange}
-                className={`w-full p-3 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white ${
-                  errors.acro ? "border-red-500" : "border-gray-300"
-                }`}
-                placeholder="Enter team acronym (e.g., ML, DS, AI)"
-              />
-              {errors.acro && (
-                <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-                  {errors.acro}
                 </p>
               )}
             </div>
@@ -259,7 +227,7 @@ const AddTeam: React.FC = () => {
                 className={`w-full p-3 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white ${
                   errors.description ? "border-red-500" : "border-gray-300"
                 }`}
-                placeholder="Describe the team's purpose, goals, and research focus"
+                placeholder="Describe the project's goals, scope, and expected outcomes"
               />
               {errors.description && (
                 <p className="mt-1 text-sm text-red-600 dark:text-red-400">
@@ -269,61 +237,118 @@ const AddTeam: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Team Members
+              <label
+                htmlFor="state"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              >
+                Project State
               </label>
-              {loadingMembers ? (
+              <select
+                id="state"
+                name="state"
+                value={formData.state}
+                onChange={handleChange}
+                className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              >
+                <option value="PLANNING">Planning</option>
+                <option value="IN_PROGRESS">In Progress</option>
+                <option value="COMPLETED">Completed</option>
+                <option value="ON_HOLD">On Hold</option>
+                <option value="CANCELLED">Cancelled</option>
+              </select>
+            </div>
+
+            <div>
+              <label
+                htmlFor="teamId"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              >
+                Team*
+              </label>
+              {loadingTeams ? (
                 <div className="flex items-center space-x-2 p-2">
                   <Loader2 className="h-5 w-5 animate-spin text-blue-500" />
                   <span className="text-sm text-gray-500 dark:text-gray-400">
-                    Loading members...
+                    Loading teams...
                   </span>
                 </div>
               ) : (
-                <div className="border border-gray-300 dark:border-gray-600 rounded-md p-4 max-h-60 overflow-y-auto">
-                  {availableMembers.length === 0 ? (
-                    <p className="text-gray-500 dark:text-gray-400">
-                      No members available
+                <>
+                  <select
+                    id="teamId"
+                    name="teamId"
+                    value={formData.teamId}
+                    onChange={handleChange}
+                    className={`w-full p-3 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white ${
+                      errors.teamId ? "border-red-500" : "border-gray-300"
+                    }`}
+                  >
+                    <option value="">Select a team</option>
+                    {leadingTeams.map((team) => (
+                      <option key={team.id} value={team.id}>
+                        {team.name} ({team.acro})
+                      </option>
+                    ))}
+                  </select>
+                  {leadingTeams.length === 0 && (
+                    <p className="mt-1 text-sm text-amber-600 dark:text-amber-400">
+                      You don't lead any teams. You must be a team leader to
+                      create projects.
                     </p>
-                  ) : (
-                    <div className="space-y-2">
-                      {availableMembers.map((member) => (
-                        <div key={member.id} className="flex items-center">
-                          <input
-                            type="checkbox"
-                            id={`member-${member.id}`}
-                            checked={selectedMembers.includes(member.id)}
-                            onChange={() => handleMemberToggle(member.id)}
-                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                          />
-                          <label
-                            htmlFor={`member-${member.id}`}
-                            className="ml-2 block text-sm text-gray-700 dark:text-gray-300"
-                          >
-                            {member.name} ({member.email})
-                          </label>
-                        </div>
-                      ))}
-                    </div>
                   )}
-                </div>
+                </>
               )}
+              {errors.teamId && (
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                  {errors.teamId}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label
+                htmlFor="expectedEndDate"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              >
+                Expected End Date
+              </label>
+              <input
+                type="date"
+                id="expectedEndDate"
+                name="expectedEndDate"
+                value={formData.expectedEndDate}
+                onChange={handleChange}
+                min={new Date().toISOString().split("T")[0]}
+                className={`w-full p-3 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white ${
+                  errors.expectedEndDate ? "border-red-500" : "border-gray-300"
+                }`}
+              />
+              {errors.expectedEndDate && (
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                  {errors.expectedEndDate}
+                </p>
+              )}
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                The date when the project is expected to be completed.
+              </p>
             </div>
           </div>
 
           <div className="flex justify-end">
             <button
               type="button"
-              onClick={() => navigate("/dashboard/LabLeader/teams")}
+              onClick={() => navigate("/dashboard/TeamLeader/projects")}
               className="mr-4 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600"
             >
               Cancel
             </button>
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={isLoading || leadingTeams.length === 0}
               className={`flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
-                isLoading ? "opacity-70 cursor-not-allowed" : ""
+                isLoading || leadingTeams.length === 0
+                  ? "opacity-70 cursor-not-allowed"
+                  : ""
               }`}
             >
               {isLoading ? (
@@ -334,7 +359,7 @@ const AddTeam: React.FC = () => {
               ) : (
                 <>
                   <Save className="mr-2 h-4 w-4" />
-                  Create Team
+                  Create Project
                 </>
               )}
             </button>
@@ -345,4 +370,4 @@ const AddTeam: React.FC = () => {
   );
 };
 
-export default AddTeam;
+export default AddProject;
