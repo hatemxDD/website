@@ -63,18 +63,37 @@ const AddNews: React.FC = () => {
     setIsLoading(true);
 
     try {
-      // In a real implementation, you would upload the image to a storage service
-      // and get back a URL to store in the database
-      // For now, we'll simulate this with a placeholder URL
+      // Default image if none is provided
       let imageUrl = "https://placeholder.com/news-image.jpg";
 
       if (imageFile) {
-        // This is where you would upload the image to your server or a cloud storage service
-        // For example: const uploadResponse = await uploadImageToServer(imageFile);
-        // imageUrl = uploadResponse.url;
+        try {
+          // Upload the image to the server
+          const formData = new FormData();
+          formData.append("image", imageFile);
 
-        // For demonstration, we'll just use the file name
-        imageUrl = `uploaded-image-${imageFile.name}`;
+          // Get the token from localStorage
+          const token = localStorage.getItem("token");
+
+          // Upload the image
+          const uploadResponse = await fetch("/api/news/upload-image", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            body: formData,
+          });
+
+          if (!uploadResponse.ok) {
+            throw new Error("Image upload failed");
+          }
+
+          const uploadResult = await uploadResponse.json();
+          imageUrl = uploadResult.imageUrl;
+        } catch (uploadError) {
+          console.error("Error uploading image:", uploadError);
+          showToast("Image upload failed. Using placeholder image.", "info");
+        }
       }
 
       // Call the API to create the news
@@ -227,6 +246,7 @@ const AddNews: React.FC = () => {
                   <option value="event">Event</option>
                   <option value="achievement">Achievement</option>
                   <option value="publication">Publication</option>
+                  <option value="technology">Technology</option>
                 </select>
                 <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-gray-300">
                   <svg

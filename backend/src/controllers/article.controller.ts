@@ -13,22 +13,23 @@ interface AuthRequest extends Request {
   };
 }
 
+// Define request types
 interface CreateArticleRequest {
   title: string;
   content: string;
   publishDate: Date;
-  authorId: number;
-  pdfLink: string;
-  journalLink: string;
+  pdfLink?: string;
+  journalLink?: string;
+  coAuthorIds?: number[];
 }
 
 interface UpdateArticleRequest {
   title?: string;
   content?: string;
-  authorId?: number;
   publishDate?: Date;
   pdfLink?: string;
   journalLink?: string;
+  coAuthorIds?: number[];
 }
 
 // Article Controller
@@ -41,10 +42,17 @@ const articleController = {
         return;
       }
 
-      const { title, content, publishDate, pdfLink, journalLink }: CreateArticleRequest = req.body;
+      const {
+        title,
+        content,
+        publishDate,
+        pdfLink,
+        journalLink,
+        coAuthorIds,
+      }: CreateArticleRequest = req.body;
       const authorId = req.user.id;
 
-      // Create new article
+      // Create new article with basic data
       const article = await prisma.article.create({
         data: {
           title,
@@ -62,8 +70,52 @@ const articleController = {
               email: true,
             },
           },
+          coAuthors: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
         },
       });
+
+      // If we have co-authors, connect them in a separate transaction to work around type issues
+      if (coAuthorIds && coAuthorIds.length > 0) {
+        // Connect co-authors to the article
+        await prisma.article.update({
+          where: { id: article.id },
+          data: {
+            coAuthors: {
+              connect: coAuthorIds.map((id) => ({ id })),
+            },
+          },
+        });
+
+        // Fetch the updated article with co-authors
+        const updatedArticle = await prisma.article.findUnique({
+          where: { id: article.id },
+          include: {
+            author: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+            coAuthors: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+          },
+        });
+
+        res.status(201).json(updatedArticle);
+        return;
+      }
 
       res.status(201).json(article);
     } catch (error) {
@@ -78,6 +130,13 @@ const articleController = {
       const articles = await prisma.article.findMany({
         include: {
           author: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+          coAuthors: {
             select: {
               id: true,
               name: true,
@@ -112,6 +171,13 @@ const articleController = {
               email: true,
             },
           },
+          coAuthors: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
         },
       });
 
@@ -131,7 +197,14 @@ const articleController = {
   updateArticle: async (req: AuthRequest, res: Response): Promise<void> => {
     try {
       const { id } = req.params;
-      const { title, content, publishDate, pdfLink, journalLink }: UpdateArticleRequest = req.body;
+      const {
+        title,
+        content,
+        publishDate,
+        pdfLink,
+        journalLink,
+        coAuthorIds,
+      }: UpdateArticleRequest = req.body;
 
       // Check if article exists
       const existingArticle = await prisma.article.findUnique({
@@ -155,14 +228,14 @@ const articleController = {
       }
 
       // Prepare update data
-      const updateData: UpdateArticleRequest = {};
+      const updateData: any = {};
       if (title) updateData.title = title;
       if (content) updateData.content = content;
       if (publishDate) updateData.publishDate = publishDate;
       if (pdfLink) updateData.pdfLink = pdfLink;
       if (journalLink) updateData.journalLink = journalLink;
 
-      // Update article
+      // Update article with basic data
       const updatedArticle = await prisma.article.update({
         where: { id: Number(id) },
         data: updateData,
@@ -174,8 +247,64 @@ const articleController = {
               email: true,
             },
           },
+          coAuthors: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
         },
       });
+
+      // If coAuthorIds is provided, handle them separately
+      if (coAuthorIds !== undefined) {
+        // First disconnect all existing co-authors
+        await prisma.article.update({
+          where: { id: Number(id) },
+          data: {
+            coAuthors: {
+              set: [], // Remove all existing connections
+            },
+          },
+        });
+
+        // Then connect the new co-authors if there are any
+        if (coAuthorIds.length > 0) {
+          await prisma.article.update({
+            where: { id: Number(id) },
+            data: {
+              coAuthors: {
+                connect: coAuthorIds.map((id) => ({ id })),
+              },
+            },
+          });
+        }
+
+        // Get the updated article with co-authors
+        const finalArticle = await prisma.article.findUnique({
+          where: { id: Number(id) },
+          include: {
+            author: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+            coAuthors: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+          },
+        });
+
+        res.json(finalArticle);
+        return;
+      }
 
       res.json(updatedArticle);
     } catch (error) {
@@ -231,6 +360,13 @@ const articleController = {
         where: { authorId: Number(authorId) },
         include: {
           author: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+          coAuthors: {
             select: {
               id: true,
               name: true,

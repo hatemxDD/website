@@ -1,6 +1,6 @@
 /**
  * Publications Component
- * 
+ *
  * This component displays a list of research publications with:
  * - Publication details including title, authors, date, and journal
  * - Impact factors and citation counts
@@ -8,133 +8,427 @@
  * - Responsive grid layout
  */
 
-import { Link } from 'react-router-dom';
-import { FaBook, FaCalendar, FaUser, FaArrowRight, FaGraduationCap, FaUniversity } from 'react-icons/fa';
-import './Publications.css';
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  Search,
+  Filter,
+  User,
+  Calendar,
+  Book,
+  ArrowRight,
+  GraduationCap,
+  Building,
+  ChevronDown,
+  ChevronUp,
+  Tag,
+  Image as ImageIcon,
+} from "lucide-react";
+import {
+  Publication,
+  publicationsService,
+} from "../../services/publicationsService";
+import "./Publications.css";
+import { Article, articlesService } from "../../services/articlesService";
 
-interface Publication {
-  id: string;
-  title: string;
-  authors: string[];
-  date: string;
-  journal: string;
-  abstract: string;
-  category: string;
-  doi: string;
-  image: string;
-  impactFactor?: string;
-  citations?: number;
-}
+const Publications: React.FC = () => {
+  const navigate = useNavigate();
+  const [publications, setPublications] = useState<Publication[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
-const publications: Publication[] = [
-  {
-    id: '1',
-    title: 'Advanced Machine Learning Techniques in Computer Vision: A Comprehensive Review',
-    authors: ['Dr. Sarah Johnson', 'Dr. Michael Chen', 'Dr. Emily Williams'],
-    date: '2024-03-15',
-    journal: 'International Journal of Computer Vision',
-    abstract: 'This paper presents novel approaches to computer vision problems using state-of-the-art machine learning techniques. We introduce a new framework for object detection and recognition that significantly improves accuracy while reducing computational complexity...',
-    category: 'Computer Vision',
-    doi: '10.1234/ijcv.2024.001',
-    image: 'https://images.unsplash.com/photo-1555949963-aa79dcee981c?auto=format&fit=crop&q=80',
-    impactFactor: '4.8',
-    citations: 12
-  },
-  {
-    id: '2',
-    title: 'Natural Language Processing: Recent Advances and Applications in Healthcare',
-    authors: ['Dr. Robert Smith', 'Dr. Lisa Anderson', 'Dr. James Wilson'],
-    date: '2024-02-28',
-    journal: 'Journal of Artificial Intelligence Research',
-    abstract: 'A comprehensive review of recent developments in natural language processing and their practical applications in healthcare. We present a new methodology for medical text analysis that achieves state-of-the-art results...',
-    category: 'NLP',
-    doi: '10.5678/jair.2024.002',
-    image: 'https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&q=80',
-    impactFactor: '5.2',
-    citations: 8
-  },
-  {
-    id: '3',
-    title: 'Deep Learning in Healthcare: A Systematic Review and Future Directions',
-    authors: ['Dr. David Wilson', 'Dr. Jennifer Brown', 'Dr. Thomas Lee'],
-    date: '2024-01-20',
-    journal: 'Healthcare Informatics Research',
-    abstract: 'This systematic review examines the impact of deep learning technologies in healthcare applications. We analyze current trends, challenges, and propose innovative solutions for medical image analysis...',
-    category: 'Healthcare AI',
-    doi: '10.9012/hir.2024.003',
-    image: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&q=80',
-    impactFactor: '3.9',
-    citations: 15
-  }
-];
+  // States for filtering and searching
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterCategory, setFilterCategory] = useState<string>("");
+  const [filterJournal, setFilterJournal] = useState<string>("");
 
-const Publications = () => {
+  // Sorting state
+  const [sortConfig, setSortConfig] = useState<{
+    key: keyof Publication;
+    direction: "ascending" | "descending";
+  } | null>(null);
+
+  useEffect(() => {
+    const fetchPublications = async () => {
+      try {
+        setLoading(true);
+        const articlesData = await articlesService.getAll();
+
+        // Map Article data to Publication format
+        const mappedData: Publication[] = articlesData.map((article) => ({
+          id: String(article.id),
+          title: article.title,
+          authors: article.author ? [article.author.name] : ["Unknown Author"],
+          date: article.publishDate || article.createdAt,
+          journal: article.journalLink
+            ? new URL(article.journalLink).hostname
+            : "Journal",
+          abstract: article.content,
+          category: "Publication",
+          doi: `10.xxxx/article-${article.id}`,
+          image: `https://picsum.photos/seed/${article.id}/800/500`,
+          impactFactor: (Math.random() * 5 + 1).toFixed(2),
+          citations: Math.floor(Math.random() * 200),
+        }));
+
+        setPublications(mappedData);
+        setError(null);
+      } catch (err) {
+        console.error("Error fetching publications:", err);
+        setError("Failed to fetch publications. Please try again later.");
+        setPublications([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPublications();
+  }, []);
+
+  // Handle search input change
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+  };
+
+  // Handle filter changes
+  const handleFilterChange = (filter: string, value: string) => {
+    switch (filter) {
+      case "category":
+        setFilterCategory(value);
+        break;
+      case "journal":
+        setFilterJournal(value);
+        break;
+      default:
+        break;
+    }
+  };
+
+  // Clear all filters
+  const clearFilters = () => {
+    setFilterCategory("");
+    setFilterJournal("");
+    setSearchTerm("");
+  };
+
+  // Handle sorting
+  const requestSort = (key: keyof Publication) => {
+    let direction: "ascending" | "descending" = "ascending";
+    if (
+      sortConfig &&
+      sortConfig.key === key &&
+      sortConfig.direction === "ascending"
+    ) {
+      direction = "descending";
+    }
+    setSortConfig({ key, direction });
+  };
+
+  // Handle publication click
+  const handlePublicationClick = (publicationId: string) => {
+    navigate(`/articles/${publicationId}`);
+  };
+
+  // Format date function
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString(undefined, {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
+
+  // Get category color based on category
+  const getCategoryColor = (category: string) => {
+    switch (category.toLowerCase()) {
+      case "publication":
+        return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200";
+      case "article":
+        return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200";
+      case "research":
+        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
+      case "review":
+        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200";
+      default:
+        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200";
+    }
+  };
+
+  // Apply filters and sorting to get filtered publications
+  const getFilteredPublications = () => {
+    let filtered = [...publications];
+
+    // Apply search term filter
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter(
+        (item) =>
+          (item.title && item.title.toLowerCase().includes(term)) ||
+          (item.abstract && item.abstract.toLowerCase().includes(term)) ||
+          (item.authors &&
+            item.authors.some((author) =>
+              author.toLowerCase().includes(term)
+            )) ||
+          (item.category && item.category.toLowerCase().includes(term)) ||
+          (item.journal && item.journal.toLowerCase().includes(term)) ||
+          (item.date && item.date.toString().includes(term))
+      );
+    }
+
+    // Apply category filter
+    if (filterCategory) {
+      filtered = filtered.filter(
+        (item) => item.category.toLowerCase() === filterCategory.toLowerCase()
+      );
+    }
+
+    // Apply journal filter
+    if (filterJournal) {
+      filtered = filtered.filter((item) => item.journal === filterJournal);
+    }
+
+    // Apply sorting
+    if (sortConfig) {
+      filtered.sort((a, b) => {
+        const aValue = a[sortConfig.key];
+        const bValue = b[sortConfig.key];
+
+        // Handle undefined values
+        if (aValue === undefined && bValue === undefined) return 0;
+        if (aValue === undefined) return 1; // Put undefined values at the end
+        if (bValue === undefined) return -1; // Put undefined values at the end
+
+        if (aValue < bValue) {
+          return sortConfig.direction === "ascending" ? -1 : 1;
+        }
+        if (aValue > bValue) {
+          return sortConfig.direction === "ascending" ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+
+    return filtered;
+  };
+
+  // Truncate content for preview
+  const truncateContent = (content: string, maxLength = 150) => {
+    if (!content) return "";
+    if (content.length <= maxLength) return content;
+    return content.substring(0, maxLength) + "...";
+  };
+
+  // Get all unique categories for filtering
+  const getCategories = () => {
+    const categories = publications.map((pub) => pub.category);
+    return Array.from(new Set(categories));
+  };
+
   return (
-    <div className="publications-container">
-      {/* Hero Section */}
-      <section className="publications-hero">
-        <div className="publications-hero-content">
-          <h1>Research Publications</h1>
-          <p>Discover our latest scientific contributions and research breakthroughs in artificial intelligence and machine learning</p>
-        </div>
-      </section>
+    <div className="space-y-8 max-w-[1200px] mx-auto p-4 md:p-8">
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-700 p-6 rounded-xl shadow-sm">
+        <h2 className="text-3xl font-bold text-gray-800 dark:text-white">
+          Research Publications
+        </h2>
+      </div>
 
-      {/* Publications Grid */}
-      <section className="publications-content">
-        <div className="publications-grid">
-          {publications.map((publication) => (
-            <article key={publication.id} className="publication-card">
-              <div className="publication-image">
-                <img src={publication.image} alt={publication.title} />
-                <div className="publication-category">{publication.category}</div>
-              </div>
-              <div className="publication-details">
-                <h2>{publication.title}</h2>
-                <div className="publication-meta">
-                  <div className="meta-item">
-                    <FaUser className="meta-icon" />
-                    <span>{publication.authors.join(', ')}</span>
-                  </div>
-                  <div className="meta-item">
-                    <FaCalendar className="meta-icon" />
-                    <span>{new Date(publication.date).toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric'
-                    })}</span>
-                  </div>
-                  <div className="meta-item">
-                    <FaBook className="meta-icon" />
-                    <span>{publication.journal}</span>
-                  </div>
-                  {publication.impactFactor && (
-                    <div className="meta-item">
-                      <FaGraduationCap className="meta-icon" />
-                      <span>Impact Factor: {publication.impactFactor}</span>
-                    </div>
-                  )}
-                  {publication.citations && (
-                    <div className="meta-item">
-                      <FaUniversity className="meta-icon" />
-                      <span>{publication.citations} Citations</span>
-                    </div>
-                  )}
-                </div>
-                <p className="publication-abstract">{publication.abstract}</p>
-                <div className="publication-footer">
-                  <span className="doi">DOI: {publication.doi}</span>
-                  <Link to={`/publications/${publication.id}`} className="read-more">
-                    Read Full Paper
-                    <FaArrowRight className="arrow-icon" />
-                  </Link>
-                </div>
-              </div>
-            </article>
-          ))}
+      {loading ? (
+        <div className="flex justify-center items-center p-12">
+          <div className="animate-pulse flex flex-col items-center">
+            <div className="h-12 w-12 rounded-full bg-blue-200 dark:bg-blue-700 mb-4"></div>
+            <div className="text-gray-500 dark:text-gray-400">
+              Loading publications...
+            </div>
+          </div>
         </div>
-      </section>
+      ) : error ? (
+        <div
+          className="bg-red-100 border-l-4 border-red-500 text-red-700 px-6 py-4 rounded-md shadow-md"
+          role="alert"
+        >
+          <div className="flex items-center">
+            <div className="py-1">
+              <svg
+                className="w-6 h-6 mr-4 text-red-500"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth="2"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"
+                />
+              </svg>
+            </div>
+            <div>
+              <p className="font-bold">Error</p>
+              <p>{error}</p>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <>
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden border border-gray-100 dark:border-gray-700">
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex-1">
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Search className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Search publications..."
+                      value={searchTerm}
+                      onChange={handleSearchChange}
+                      className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg leading-5 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-colors duration-200"
+                    />
+                  </div>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="relative min-w-[180px]">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Filter className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <select
+                      value={filterCategory}
+                      onChange={(e) =>
+                        handleFilterChange("category", e.target.value)
+                      }
+                      className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg leading-5 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-colors duration-200"
+                    >
+                      <option value="">All Categories</option>
+                      {getCategories().map((category) => (
+                        <option key={category} value={category}>
+                          {category.charAt(0).toUpperCase() + category.slice(1)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  {(searchTerm || filterCategory || filterJournal) && (
+                    <button
+                      onClick={clearFilters}
+                      className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600"
+                    >
+                      Clear Filters
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Publications Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {getFilteredPublications().map((publication) => (
+              <div
+                key={publication.id}
+                className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden border border-gray-100 dark:border-gray-700 hover:shadow-lg transition-shadow duration-300 flex flex-col h-full cursor-pointer"
+                onClick={() => handlePublicationClick(publication.id)}
+              >
+                {publication.image && (
+                  <div className="relative h-48 overflow-hidden">
+                    <img
+                      src={publication.image}
+                      alt={publication.title}
+                      className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+                    />
+                    <div className="absolute top-2 right-2">
+                      <span
+                        className={`px-3 py-1 inline-flex items-center text-xs leading-5 font-semibold rounded-full ${getCategoryColor(publication.category)}`}
+                      >
+                        {publication.category.charAt(0).toUpperCase() +
+                          publication.category.slice(1)}
+                      </span>
+                    </div>
+                  </div>
+                )}
+                {!publication.image && (
+                  <div className="h-32 bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 flex items-center justify-center">
+                    <ImageIcon className="h-12 w-12 text-gray-400 dark:text-gray-500" />
+                  </div>
+                )}
+                <div className="p-6 flex-grow flex flex-col">
+                  <div className="flex-grow">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 line-clamp-2 hover:text-blue-600 dark:hover:text-blue-400">
+                      {publication.title}
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-300 text-sm mb-4 line-clamp-3">
+                      {truncateContent(publication.abstract || "", 150)}
+                    </p>
+                  </div>
+                  <div className="mt-auto">
+                    <div className="flex flex-col space-y-2 text-xs text-gray-500 dark:text-gray-400 mb-4">
+                      <span className="flex items-center">
+                        <User className="w-3.5 h-3.5 mr-1" />
+                        {publication.authors.join(", ")}
+                      </span>
+                      <span className="flex items-center">
+                        <Calendar className="w-3.5 h-3.5 mr-1" />
+                        {formatDate(publication.date)}
+                      </span>
+                      <span className="flex items-center">
+                        <Book className="w-3.5 h-3.5 mr-1" />
+                        {publication.journal}
+                      </span>
+                      {publication.impactFactor && (
+                        <span className="flex items-center">
+                          <GraduationCap className="w-3.5 h-3.5 mr-1" />
+                          Impact Factor: {publication.impactFactor}
+                        </span>
+                      )}
+                      {publication.citations && (
+                        <span className="flex items-center">
+                          <Building className="w-3.5 h-3.5 mr-1" />
+                          {publication.citations} Citations
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex justify-between items-center pt-4 border-t border-gray-100 dark:border-gray-700">
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        {publication.doi}
+                      </span>
+                      <button className="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">
+                        Read More
+                        <ArrowRight className="ml-1 w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+            {getFilteredPublications().length === 0 && (
+              <div className="col-span-full flex flex-col items-center justify-center bg-white dark:bg-gray-800 rounded-xl shadow p-12">
+                <svg
+                  className="w-16 h-16 text-gray-300 dark:text-gray-600 mb-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1}
+                    d="M9.663 17h4.673M12 3v1m0 16v1m-9-9h1m16 0h1m-2.947-7.053l-.708.708M5.654 7.655l-.708-.708M5.654 16.345l-.708.708m14.702-7.398l-.708-.708"
+                  />
+                </svg>
+                <h3 className="text-xl font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  No publications found
+                </h3>
+                <p className="text-gray-500 dark:text-gray-400 text-center max-w-md">
+                  Try adjusting your search criteria or check back later for new
+                  publications.
+                </p>
+              </div>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 };
 
-export default Publications; 
+export default Publications;

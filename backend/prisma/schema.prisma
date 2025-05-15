@@ -33,6 +33,7 @@ model User {
   name           String
   password       String
   role           Role            @default(TeamMember)
+  image          String?
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
   leadingTeams   Team[]          @relation("TeamLeader")
@@ -40,6 +41,7 @@ model User {
   teams          Team[]          @relation("TeamMembers")
   news           News[]
   articles       Article[]
+  coAuthoredArticles Article[]   @relation("ArticleCoAuthors")
 }
 
 model Team {
@@ -82,7 +84,7 @@ model News {
 
 model Article {
   id          Int       @id @default(autoincrement())
-  title        String
+  title       String
   content     String    @db.Text
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
@@ -91,6 +93,7 @@ model Article {
   author      User      @relation(fields: [authorId], references: [id])
   pdfLink     String?   // Optional PDF link
   journalLink String?   // Optional journal link
+  coAuthors   User[]    @relation("ArticleCoAuthors")
 }
 
 model Project {

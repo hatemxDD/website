@@ -15,6 +15,11 @@ export interface Article {
     name: string;
     email: string;
   };
+  coAuthors?: {
+    id: number;
+    name: string;
+    email: string;
+  }[];
 }
 
 export interface CreateArticleData {
@@ -24,6 +29,7 @@ export interface CreateArticleData {
   authorId: number;
   pdfLink: string;
   journalLink: string;
+  coAuthorIds?: number[];
 }
 
 export interface UpdateArticleData {
@@ -33,6 +39,7 @@ export interface UpdateArticleData {
   authorId?: number;
   pdfLink?: string;
   journalLink?: string;
+  coAuthorIds?: number[];
 }
 
 export const articlesService = {

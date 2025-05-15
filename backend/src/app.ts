@@ -2,14 +2,21 @@
 import express, { Request, Response, NextFunction } from "express";
 import dotenv from "dotenv";
 import cors from "cors";
+import path from "path";
 import userRoutes from "./routes/user.routes";
 import teamRoutes from "./routes/team.routes";
 import projectRoutes from "./routes/project.routes";
 import newsRoutes from "./routes/news.routes";
 import articleRoutes from "./routes/article.routes";
 
+// Load environment variables
+dotenv.config();
+
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Define upload directory path
+const UPLOAD_DIR = process.env.UPLOAD_DIR || path.join(__dirname, "../uploads");
 
 // Middleware
 app.use(express.json());
@@ -17,6 +24,9 @@ app.use(express.urlencoded({ extended: false }));
 
 // CORS middleware
 app.use(cors());
+
+// Serve static files from the uploads directory
+app.use("/uploads", express.static(UPLOAD_DIR));
 
 // Routes
 app.use("/api/users", userRoutes);

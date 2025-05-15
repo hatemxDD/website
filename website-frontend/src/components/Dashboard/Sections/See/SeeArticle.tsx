@@ -8,6 +8,9 @@ import {
   Trash2,
   Calendar,
   User,
+  Eye,
+  ChevronRight,
+  Users,
 } from "lucide-react";
 import { articlesService, Article } from "../../../../services/articlesService";
 import { useAuth } from "../../../../contexts/AuthContext";
@@ -28,7 +31,15 @@ const SeeArticle: React.FC = () => {
         setError(null);
 
         const response = await articlesService.getAll();
-        setArticles(response);
+        console.log("Articles from API:", response);
+
+        // Ensure coAuthors property exists even if it's not returned from backend
+        const articlesWithCoAuthors = response.map((article) => ({
+          ...article,
+          coAuthors: article.coAuthors || [],
+        }));
+
+        setArticles(articlesWithCoAuthors);
       } catch (err) {
         console.error("Error fetching articles:", err);
         setError("Failed to load articles. Please try again later.");
@@ -41,7 +52,7 @@ const SeeArticle: React.FC = () => {
   }, []);
 
   const handleAddArticle = () => {
-      navigate(`/dashboard/${user?.role}/articles/add`);
+    navigate(`/dashboard/${user?.role}/articles/add`);
   };
 
   const handleEditArticle = (id: number) => {
@@ -87,102 +98,146 @@ const SeeArticle: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <Loader2 className="h-8 w-8 text-blue-600 animate-spin" />
-        <span className="ml-2 text-gray-600">Loading articles...</span>
+      <div className="flex justify-center items-center h-96">
+        <div className="text-center">
+          <Loader2 className="h-10 w-10 text-blue-600 animate-spin mx-auto mb-4" />
+          <span className="text-gray-600 font-medium">Loading articles...</span>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-900">Articles</h2>
+    <div className="space-y-8">
+      <div className="flex justify-between items-center bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-xl shadow-sm">
+        <h2 className="text-3xl font-bold text-gray-800">
+          <span className="text-blue-600">Your</span> Articles
+        </h2>
         <button
           onClick={handleAddArticle}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md flex items-center space-x-2 hover:bg-blue-700 transition-colors"
+          className="px-5 py-2.5 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700 transition-colors shadow-sm hover:shadow-md"
         >
           <Plus className="h-5 w-5" />
-          <span>Add Article</span>
+          <span className="font-medium">Add Article</span>
         </button>
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md flex items-start">
-          <AlertCircle className="h-5 w-5 mr-2 mt-0.5 flex-shrink-0" />
-          <span>{error}</span>
+        <div className="bg-red-50 border-l-4 border-red-500 text-red-700 px-6 py-4 rounded-lg shadow-sm flex items-start">
+          <AlertCircle className="h-6 w-6 mr-3 flex-shrink-0 text-red-500" />
+          <span className="font-medium">{error}</span>
         </div>
       )}
 
       {articles.length === 0 && !loading ? (
-        <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded-md">
-          No articles found. Create your first article by clicking the "Add
-          Article" button.
+        <div className="bg-amber-50 border-l-4 border-amber-400 text-amber-800 px-6 py-8 rounded-lg text-center shadow-sm">
+          <div className="max-w-md mx-auto">
+            <h3 className="text-lg font-semibold mb-2">No articles yet</h3>
+            <p className="mb-4">
+              Create your first article by clicking the "Add Article" button
+              above.
+            </p>
+            <button
+              onClick={handleAddArticle}
+              className="px-4 py-2 bg-amber-600 text-white rounded-md flex items-center mx-auto gap-2 hover:bg-amber-700 transition-colors"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Create Now</span>
+            </button>
+          </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {articles.map((article) => (
             <div
               key={article.id}
-              className="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200 hover:shadow-md transition-shadow"
+              className="bg-white rounded-xl overflow-hidden border border-gray-200 hover:shadow-lg transition-all duration-300 flex flex-col"
             >
-              <div className="p-5">
+              <div className="p-6 flex-grow">
                 <h3
-                  className="text-xl font-semibold text-gray-900 mb-2 cursor-pointer hover:text-blue-600"
+                  className="text-xl font-bold text-gray-800 mb-3 line-clamp-2 cursor-pointer hover:text-blue-600 transition-colors"
                   onClick={() => handleViewArticle(article.id)}
                 >
                   {article.title}
                 </h3>
 
-                <div className="flex items-center text-sm text-gray-500 mb-4 space-x-4">
-                  <div className="flex items-center">
-                    <Calendar className="h-4 w-4 mr-1.5" />
-                    <span>{formatDate(article.publishDate)}</span>
+                <div className="flex flex-col space-y-3 mb-4">
+                  <div className="flex items-center text-sm text-gray-500 space-x-5">
+                    <div className="flex items-center">
+                      <Calendar className="h-4 w-4 mr-1.5 text-blue-500" />
+                      <span>{formatDate(article.publishDate)}</span>
+                    </div>
                   </div>
 
-                  <div className="flex items-center">
-                    <User className="h-4 w-4 mr-1.5" />
-                    <span>{article.author?.name || "Unknown Author"}</span>
+                  <div className="flex items-start">
+                    <User className="h-4 w-4 mr-1.5 mt-0.5 text-blue-500" />
+                    <div>
+                      <div className="text-sm font-medium text-gray-800">
+                        {article.author?.name || "Unknown Author"}
+                      </div>
+
+                      <div className="mt-1">
+                        <div className="flex items-center text-xs text-gray-500">
+                          <Users className="h-3.5 w-3.5 mr-1 text-blue-400" />
+                          <span className="font-medium">Co-authors:</span>
+                        </div>
+
+                        {article.coAuthors && article.coAuthors.length > 0 ? (
+                          <div className="mt-1 flex flex-wrap gap-1">
+                            {article.coAuthors.map((coAuthor) => (
+                              <span
+                                key={coAuthor.id}
+                                className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700"
+                              >
+                                {coAuthor.name}
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="mt-1 text-xs text-gray-500 italic">
+                            No co-authors
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                <div className="prose prose-sm line-clamp-3 mb-4 text-gray-600">
+                <div className="prose prose-sm line-clamp-3 mb-5 text-gray-600">
                   {/* Strip HTML tags for preview */}
                   {article.content.replace(/<[^>]*>?/gm, "").substring(0, 150)}
                   {article.content.length > 150 ? "..." : ""}
                 </div>
+              </div>
 
-                <div className="flex space-x-2 pt-2 border-t border-gray-100">
-                  <button
-                    onClick={() => handleViewArticle(article.id)}
-                    className="px-3 py-1.5 text-sm text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
-                  >
-                    View
-                  </button>
+              <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-between items-center">
+                <button
+                  onClick={() => handleViewArticle(article.id)}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md flex items-center gap-1.5 hover:bg-blue-700 transition-colors shadow-sm"
+                >
+                  <Eye className="h-4 w-4" />
+                  <span>View</span>
+                </button>
 
+                <div className="flex gap-2">
                   <button
                     onClick={() => handleEditArticle(article.id)}
-                    className="px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50 rounded-md transition-colors flex items-center"
+                    className="p-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+                    title="Edit Article"
                   >
-                    <Edit className="h-4 w-4 mr-1" />
-                    Edit
+                    <Edit className="h-5 w-5" />
                   </button>
 
                   <button
                     onClick={() => handleDeleteArticle(article.id)}
                     disabled={isDeleting && deleteArticleId === article.id}
-                    className="px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 rounded-md transition-colors flex items-center disabled:opacity-50"
+                    className="p-2 text-red-600 hover:bg-red-50 rounded-full transition-colors disabled:opacity-50"
+                    title="Delete Article"
                   >
                     {isDeleting && deleteArticleId === article.id ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                        Deleting...
-                      </>
+                      <Loader2 className="h-5 w-5 animate-spin" />
                     ) : (
-                      <>
-                        <Trash2 className="h-4 w-4 mr-1" />
-                        Delete
-                      </>
+                      <Trash2 className="h-5 w-5" />
                     )}
                   </button>
                 </div>

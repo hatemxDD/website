@@ -117,16 +117,40 @@ const EditNews: React.FC = () => {
         throw new Error("Invalid news ID");
       }
 
-      // In a real implementation, you would upload the image if changed
+      // Keep the existing image URL unless changed
       let imageUrl = formData.image;
 
       if (imageFile) {
-        // This is where you would upload the image to your server or a cloud storage service
-        // For example: const uploadResponse = await uploadImageToServer(imageFile);
-        // imageUrl = uploadResponse.url;
+        try {
+          // Upload the image to the server
+          const formData = new FormData();
+          formData.append("image", imageFile);
 
-        // For demonstration, we'll just use the file name
-        imageUrl = `uploaded-image-${imageFile.name}`;
+          // Get the token from localStorage
+          const token = localStorage.getItem("token");
+
+          // Upload the image
+          const uploadResponse = await fetch("/api/news/upload-image", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            body: formData,
+          });
+
+          if (!uploadResponse.ok) {
+            throw new Error("Image upload failed");
+          }
+
+          const uploadResult = await uploadResponse.json();
+          imageUrl = uploadResult.imageUrl;
+        } catch (uploadError) {
+          console.error("Error uploading image:", uploadError);
+          setError(
+            "Image upload failed, but you can still update other information."
+          );
+          // We'll continue with the existing image
+        }
       }
 
       // Transform data to match backend expectations

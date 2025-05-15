@@ -1,6 +1,6 @@
 // Member Sections
 export { default as MemberOverview } from "./Member/MemberOverview";
-export { default as Profile } from "./Member/Profile";
+export { default as Profile } from "./Profile";
 export { default as SeeProjects } from "./Member/SeeProjects";
 
 // Team Leader Sections

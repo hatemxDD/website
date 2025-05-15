@@ -64,7 +64,11 @@ const AddArticle: React.FC = () => {
         setContent(article.content);
         setPdfLink(article.pdfLink || "");
         setJournalLink(article.journalLink || "");
-        // Would need to fetch co-authors if that data is available
+
+        // Fetch co-authors if they exist
+        if (article.coAuthors && article.coAuthors.length > 0) {
+          setCoAuthors(article.coAuthors as User[]);
+        }
       } catch (err) {
         console.error("Error fetching article:", err);
         setError("Failed to load article for editing. Please try again.");
@@ -106,6 +110,9 @@ const AddArticle: React.FC = () => {
       // The current date will be used for the publish date
       const currentDate = new Date();
 
+      // Get co-author IDs
+      const coAuthorIds = coAuthors.map((author) => author.id);
+
       if (isEditMode && id) {
         await articlesService.update(parseInt(id), {
           title,
@@ -113,7 +120,7 @@ const AddArticle: React.FC = () => {
           publishDate: currentDate,
           pdfLink,
           journalLink,
-          // Co-authors would be handled in a separate API call if needed
+          coAuthorIds,
         });
       } else {
         await articlesService.create({
@@ -123,7 +130,7 @@ const AddArticle: React.FC = () => {
           authorId: user.id,
           pdfLink,
           journalLink,
-          // Co-authors would be handled in a separate API call if needed
+          coAuthorIds,
         });
       }
 
@@ -163,6 +170,8 @@ const AddArticle: React.FC = () => {
             <span>{error}</span>
           </div>
         )}
+
+
 
         <form onSubmit={handleSubmit} className="space-y-8">
           <div className="space-y-2">

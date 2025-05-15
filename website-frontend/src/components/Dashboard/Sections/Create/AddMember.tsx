@@ -24,7 +24,6 @@ interface MemberFormData {
   role: Role;
   department?: string;
   position?: string;
-  photo?: string;
 }
 
 const AddMember: React.FC = () => {
@@ -36,7 +35,6 @@ const AddMember: React.FC = () => {
     role: Role.TeamMember,
     department: "",
     position: "",
-    photo: "",
   });
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
@@ -105,7 +103,7 @@ const AddMember: React.FC = () => {
         // Additional fields mapped to backend expectations
         team: formData.department?.trim() || "",
         joinDate: new Date().toISOString().split("T")[0],
-        photo: formData.photo?.trim() || "",
+        photo: "", // Empty photo field
       };
 
       console.log("Sending user data to API:", userData);
@@ -124,7 +122,6 @@ const AddMember: React.FC = () => {
         role: Role.TeamMember,
         department: "",
         position: "",
-        photo: "",
       });
 
       // Redirect after a short delay
@@ -349,29 +346,6 @@ const AddMember: React.FC = () => {
                 placeholder="Researcher"
               />
             </div>
-          </div>
-
-          {/* Photo URL Field */}
-          <div className="space-y-2 md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
-              Photo URL
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <FaUser className="h-5 w-5 text-gray-400" />
-              </div>
-              <input
-                type="text"
-                name="photo"
-                value={formData.photo}
-                onChange={handleChange}
-                placeholder="https://example.com/photo.jpg"
-                className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg leading-5 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 sm:text-sm"
-              />
-            </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              URL for profile avatar (JPG, PNG or GIF)
-            </p>
           </div>
         </div>
 

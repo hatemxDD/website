@@ -1,6 +1,8 @@
 // src/controllers/newsController.ts
 import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
+import path from "path";
+import fs from "fs";
 
 const prisma = new PrismaClient();
 
@@ -13,6 +15,20 @@ interface AuthRequest extends Request {
   };
 }
 
+// Custom request type for authenticated requests with file upload
+interface FileAuthRequest extends AuthRequest {
+  file?: Express.Multer.File;
+}
+
+// Define upload directory
+const UPLOAD_DIR =
+  process.env.UPLOAD_DIR || path.join(__dirname, "../../uploads");
+
+// Ensure upload directory exists
+if (!fs.existsSync(UPLOAD_DIR)) {
+  fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+}
+
 interface CreateNewsRequest {
   title: string;
   image: string;
@@ -21,7 +37,6 @@ interface CreateNewsRequest {
   status: string;
   publishDate: Date;
   authorId: number;
-  
 }
 
 interface UpdateNewsRequest {
@@ -133,7 +148,15 @@ const newsController = {
   updateNews: async (req: AuthRequest, res: Response): Promise<void> => {
     try {
       const { id } = req.params;
-      const { title, image , content , category, tags, status, publishDate }: UpdateNewsRequest = req.body;
+      const {
+        title,
+        image,
+        content,
+        category,
+        tags,
+        status,
+        publishDate,
+      }: UpdateNewsRequest = req.body;
 
       // Check if news exists
       const existingNews = await prisma.news.findUnique({
@@ -253,6 +276,44 @@ const newsController = {
       res
         .status(500)
         .json({ message: "Server error while fetching author news" });
+    }
+  },
+
+  // Upload news image
+  uploadImage: async (req: FileAuthRequest, res: Response): Promise<void> => {
+    try {
+      if (!req.user || !req.user.id) {
+        res.status(401).json({ message: "Not authenticated" });
+        return;
+      }
+
+      if (!req.file) {
+        res.status(400).json({ message: "No image file provided" });
+        return;
+      }
+
+      // Get the file from multer
+      const file = req.file;
+
+      // Create unique filename
+      const filename = `news_${Date.now()}${path.extname(file.originalname)}`;
+      const filepath = path.join(UPLOAD_DIR, filename);
+
+      // Create public URL (based on your server setup)
+      const baseUrl =
+        process.env.BASE_URL || `http://localhost:${process.env.PORT || 3000}`;
+      const imageUrl = `${baseUrl}/uploads/${filename}`;
+
+      // Save file to disk
+      fs.writeFileSync(filepath, file.buffer);
+
+      res.json({
+        message: "News image uploaded successfully",
+        imageUrl: imageUrl,
+      });
+    } catch (error) {
+      console.error("Error uploading news image:", error);
+      res.status(500).json({ message: "Server error during image upload" });
     }
   },
 };

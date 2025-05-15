@@ -43,7 +43,6 @@ import AddArticle from "./components/Dashboard/Sections/Create/AddArticle";
 import TeamLeaderOverview from "./components/Dashboard/Sections/TeamLeader/TeamLeaderOverview";
 import TeamManagement from "./components/Dashboard/Sections/TeamLeader/TeamManagement";
 import ProjectsManagement from "./components/Dashboard/Sections/TeamLeader/ProjectsManagement";
-import PublicationsManagement from "./components/Dashboard/Sections/TeamLeader/PublicationsManagement";
 import AddMemberToTeam from "./components/Dashboard/Sections/TeamLeader/AddMemberToTeam";
 
 // Import Member sections
@@ -174,10 +173,7 @@ const AppRoutes = () => {
         <Route path="articles" element={<SeeArticle />} />
         <Route path="articles/add" element={<AddArticle />} />
         <Route path="articles/edit/:id" element={<AddArticle />} />
-        <Route path="publications" element={<PublicationsManagement />} />
-        <Route path="publications/add" element={<PublicationsManagement />} />
-        <Route path="news" element={<SeeNews />} />
-        <Route path="news/add" element={<AddNews />} />
+        <Route path="publications" element={<Publications />} />
         <Route path="profile" element={<Profile />} />
         <Route path="*" element={<Navigate to="overview" replace />} />
       </Route>
@@ -194,7 +190,6 @@ const AppRoutes = () => {
         <Route index element={<Navigate to="overview" replace />} />
         <Route path="overview" element={<MemberOverview />} />
         <Route path="projects" element={<MemberProjects />} />
-        <Route path="team-projects" element={<MemberProjects />} />
         <Route path="publications" element={<Publications />} />
         <Route path="news" element={<SeeNews />} />
         <Route path="profile" element={<Profile />} />

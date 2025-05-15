@@ -11,6 +11,7 @@ router.get("/", teamController.getAllTeams);
 router.get("/my-teams", authMiddleware, teamController.getMyTeams);
 router.get("/members/all", teamController.getAllTeamMembers);
 router.get("/:id", teamController.getTeamById);
+router.get("/:id/members", teamController.getTeamMembersByTeamId);
 // Protected routes
 router.post("/", authMiddleware, teamController.createTeam);
 router.put("/:id", authMiddleware, teamController.updateTeam);

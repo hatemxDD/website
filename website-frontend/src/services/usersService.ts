@@ -10,8 +10,9 @@ export interface User {
   team?: string;
   joinDate?: string;
   photo?: string;
+  image?: string;
   createdAt?: string;
-  
+
   // Add other user properties as needed
 }
 

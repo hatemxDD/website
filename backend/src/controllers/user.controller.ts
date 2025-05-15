@@ -4,10 +4,20 @@ import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { Role, User } from "@prisma/client";
+import path from "path";
+import fs from "fs";
+import multer from "multer";
 const prisma = new PrismaClient();
 
 // Environment variables should be configured in a .env file
 const JWT_SECRET = process.env.JWT_SECRET || "your_jwt_secret";
+const UPLOAD_DIR =
+  process.env.UPLOAD_DIR || path.join(__dirname, "../../uploads");
+
+// Ensure upload directory exists
+if (!fs.existsSync(UPLOAD_DIR)) {
+  fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+}
 
 // Define request types with proper interfaces
 interface RegisterRequest {
@@ -15,6 +25,7 @@ interface RegisterRequest {
   name: string;
   password: string;
   role?: Role;
+  image?: string;
 }
 
 interface LoginRequest {
@@ -27,6 +38,7 @@ interface UpdateUserRequest {
   email?: string;
   role?: Role;
   password?: string;
+  image?: string;
 }
 
 // Custom request type for authenticated requests
@@ -35,7 +47,13 @@ interface AuthRequest extends Request {
     id: number;
     email: string;
     role: Role;
+    image?: string;
   };
+}
+
+// Custom request type for authenticated requests with file upload
+interface FileAuthRequest extends AuthRequest {
+  file?: Express.Multer.File;
 }
 
 // Helper function to exclude password from user object
@@ -49,7 +67,7 @@ const userController = {
   // Register a new user
   register: async (req: Request, res: Response): Promise<void> => {
     try {
-      const { email, name, password, role }: RegisterRequest = req.body;
+      const { email, name, password, role, image }: RegisterRequest = req.body;
 
       // Check if user already exists
       const existingUser = await prisma.user.findUnique({
@@ -73,6 +91,7 @@ const userController = {
           name,
           password: hashedPassword,
           role: role || "TeamMember", // Default to USER role if not specified
+          image,
         },
       });
 
@@ -137,6 +156,7 @@ const userController = {
           email: true,
           name: true,
           role: true,
+          image: true,
           createdAt: true,
           updatedAt: true,
         },
@@ -161,6 +181,7 @@ const userController = {
           email: true,
           name: true,
           role: true,
+          image: true,
           createdAt: true,
           updatedAt: true,
           leadingTeams: true,
@@ -188,7 +209,8 @@ const userController = {
   updateUser: async (req: Request, res: Response): Promise<void> => {
     try {
       const { id } = req.params;
-      const { name, email, role, password }: UpdateUserRequest = req.body;
+      const { name, email, role, password, image }: UpdateUserRequest =
+        req.body;
 
       // Check if user exists
       const existingUser = await prisma.user.findUnique({
@@ -205,7 +227,7 @@ const userController = {
       if (name) updateData.name = name;
       if (email) updateData.email = email;
       if (role) updateData.role = role;
-
+      if (image) updateData.image = image;
       // Hash password if provided
       if (password) {
         updateData.password = await bcrypt.hash(password, 10);
@@ -268,6 +290,7 @@ const userController = {
           email: true,
           name: true,
           role: true,
+          image: true,
           createdAt: true,
           updatedAt: true,
           leadingTeams: true,
@@ -300,7 +323,7 @@ const userController = {
       }
 
       const userId = req.user.id;
-      const { name, email, password }: UpdateUserRequest = req.body;
+      const { name, email, password, image }: UpdateUserRequest = req.body;
 
       // Check if user exists
       const existingUser = await prisma.user.findUnique({
@@ -316,7 +339,7 @@ const userController = {
       const updateData: UpdateUserRequest = {};
       if (name) updateData.name = name;
       if (email) updateData.email = email;
-
+      if (image) updateData.image = image;
       // Hash password if provided
       if (password) {
         updateData.password = await bcrypt.hash(password, 10);
@@ -335,6 +358,53 @@ const userController = {
     }
   },
 
+  // Upload user image
+  uploadImage: async (req: FileAuthRequest, res: Response): Promise<void> => {
+    try {
+      if (!req.user || !req.user.id) {
+        res.status(401).json({ message: "Not authenticated" });
+        return;
+      }
+
+      if (!req.file) {
+        res.status(400).json({ message: "No image file provided" });
+        return;
+      }
+
+      const userId = req.user.id;
+
+      // Get the file from multer
+      const file = req.file;
+
+      // Create unique filename
+      const filename = `user_${userId}_${Date.now()}${path.extname(
+        file.originalname
+      )}`;
+      const filepath = path.join(UPLOAD_DIR, filename);
+
+      // Create public URL (based on your server setup)
+      const baseUrl =
+        process.env.BASE_URL || `http://localhost:${process.env.PORT || 3000}`;
+      const imageUrl = `${baseUrl}/uploads/${filename}`;
+
+      // Save file to disk
+      fs.writeFileSync(filepath, file.buffer);
+
+      // Update user with new image URL
+      const updatedUser = await prisma.user.update({
+        where: { id: userId },
+        data: { image: imageUrl },
+      });
+
+      res.json({
+        message: "Image uploaded successfully",
+        imageUrl: updatedUser.image,
+      });
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      res.status(500).json({ message: "Server error during image upload" });
+    }
+  },
 };
 
 export default userController;

@@ -6,6 +6,10 @@ import {
   Calendar,
   Trash2,
   Edit,
+  Eye,
+  ChevronDown,
+  ChevronUp,
+  Image as ImageIcon,
 } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import { FaPlus, FaCalendarAlt } from "react-icons/fa";
@@ -173,7 +177,6 @@ const SeeNews: React.FC = () => {
       filtered = filtered.filter((item) => item.author?.name === filterAuthor);
     }
 
-
     // Apply sorting
     if (sortConfig) {
       filtered.sort((a, b) => {
@@ -206,7 +209,6 @@ const SeeNews: React.FC = () => {
       day: "numeric",
     });
   };
-
 
   // Truncate content for preview
   const truncateContent = (content: string, maxLength = 150) => {
@@ -245,14 +247,14 @@ const SeeNews: React.FC = () => {
   const showDeleteControls = true;
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-800 dark:text-white">
+    <div className="space-y-8">
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-700 p-6 rounded-xl shadow-sm">
+        <h2 className="text-3xl font-bold text-gray-800 dark:text-white">
           News Management
         </h2>
         <Link
           to="/dashboard/LabLeader/news/add"
-          className="flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          className="flex items-center px-5 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 shadow-md transition-all duration-200 ease-in-out transform hover:translate-y-[-2px]"
         >
           <FaPlus className="mr-2" />
           Add News
@@ -260,21 +262,46 @@ const SeeNews: React.FC = () => {
       </div>
 
       {loading ? (
-        <div className="flex justify-center items-center p-8">
-          <div className="text-gray-500">Loading news...</div>
+        <div className="flex justify-center items-center p-12">
+          <div className="animate-pulse flex flex-col items-center">
+            <div className="h-12 w-12 rounded-full bg-blue-200 dark:bg-blue-700 mb-4"></div>
+            <div className="text-gray-500 dark:text-gray-400">
+              Loading news...
+            </div>
+          </div>
         </div>
       ) : error ? (
         <div
-          className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative"
+          className="bg-red-100 border-l-4 border-red-500 text-red-700 px-6 py-4 rounded-md shadow-md"
           role="alert"
         >
-          <strong className="font-bold">Error!</strong>
-          <span className="block sm:inline"> {error}</span>
+          <div className="flex items-center">
+            <div className="py-1">
+              <svg
+                className="w-6 h-6 mr-4 text-red-500"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth="2"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"
+                />
+              </svg>
+            </div>
+            <div>
+              <p className="font-bold">Error</p>
+              <p>{error}</p>
+            </div>
+          </div>
         </div>
       ) : (
         <>
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
-            <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden border border-gray-100 dark:border-gray-700">
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
               <div className="flex flex-col md:flex-row gap-4">
                 <div className="flex-1">
                   <div className="relative">
@@ -286,12 +313,12 @@ const SeeNews: React.FC = () => {
                       placeholder="Search news..."
                       value={searchTerm}
                       onChange={handleSearchChange}
-                      className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg leading-5 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-colors duration-200"
                     />
                   </div>
                 </div>
-                <div className="flex items-center">
-                  <div className="relative">
+                <div className="flex items-center gap-4">
+                  <div className="relative min-w-[180px]">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                       <Filter className="h-5 w-5 text-gray-400" />
                     </div>
@@ -300,7 +327,7 @@ const SeeNews: React.FC = () => {
                       onChange={(e) =>
                         handleFilterChange("category", e.target.value)
                       }
-                      className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg leading-5 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-colors duration-200"
                     >
                       <option value="">All Categories</option>
                       {categories.map((category) => (
@@ -310,6 +337,14 @@ const SeeNews: React.FC = () => {
                       ))}
                     </select>
                   </div>
+                  {(searchTerm || filterCategory || filterAuthor) && (
+                    <button
+                      onClick={clearFilters}
+                      className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600"
+                    >
+                      Clear Filters
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -318,45 +353,103 @@ const SeeNews: React.FC = () => {
               <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead className="bg-gray-50 dark:bg-gray-700">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Title
+                    <th className="group px-6 py-3.5 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      <div
+                        className="flex items-center gap-2 cursor-pointer"
+                        onClick={() => requestSort("title")}
+                      >
+                        Title
+                        {sortConfig?.key === "title" &&
+                          (sortConfig.direction === "ascending" ? (
+                            <ChevronUp className="h-4 w-4" />
+                          ) : (
+                            <ChevronDown className="h-4 w-4" />
+                          ))}
+                      </div>
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    <th className="px-6 py-3.5 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                       Content
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Category
+                    <th className="group px-6 py-3.5 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      <div
+                        className="flex items-center gap-2 cursor-pointer"
+                        onClick={() => requestSort("category")}
+                      >
+                        Category
+                        {sortConfig?.key === "category" &&
+                          (sortConfig.direction === "ascending" ? (
+                            <ChevronUp className="h-4 w-4" />
+                          ) : (
+                            <ChevronDown className="h-4 w-4" />
+                          ))}
+                      </div>
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Publish Date
+                    <th className="group px-6 py-3.5 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      <div
+                        className="flex items-center gap-2 cursor-pointer"
+                        onClick={() => requestSort("publishDate")}
+                      >
+                        Publish Date
+                        {sortConfig?.key === "publishDate" &&
+                          (sortConfig.direction === "ascending" ? (
+                            <ChevronUp className="h-4 w-4" />
+                          ) : (
+                            <ChevronDown className="h-4 w-4" />
+                          ))}
+                      </div>
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Status
+                    <th className="group px-6 py-3.5 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      <div
+                        className="flex items-center gap-2 cursor-pointer"
+                        onClick={() => requestSort("status")}
+                      >
+                        Status
+                        {sortConfig?.key === "status" &&
+                          (sortConfig.direction === "ascending" ? (
+                            <ChevronUp className="h-4 w-4" />
+                          ) : (
+                            <ChevronDown className="h-4 w-4" />
+                          ))}
+                      </div>
                     </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    <th className="px-6 py-3.5 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                   {getFilteredNews().map((item) => (
-                    <tr key={item.id}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+                    <tr
+                      key={item.id}
+                      className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150"
+                    >
+                      <td
+                        className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white cursor-pointer"
+                        onClick={() => handleNewsClick(item.id)}
+                      >
                         {item.title}
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-300">
+                      <td
+                        className="px-6 py-4 text-sm text-gray-500 dark:text-gray-300 cursor-pointer"
+                        onClick={() => handleNewsClick(item.id)}
+                      >
                         {truncateContent(item.content || "", 100)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td
+                        className="px-6 py-4 whitespace-nowrap cursor-pointer"
+                        onClick={() => handleNewsClick(item.id)}
+                      >
                         <span
-                          className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                          className={`px-3 py-1 inline-flex items-center text-xs leading-5 font-semibold rounded-full ${
                             item.category === "announcement"
                               ? "bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100"
                               : item.category === "event"
                                 ? "bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100"
                                 : item.category === "achievement"
                                   ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100"
-                                  : "bg-purple-100 text-purple-800 dark:bg-purple-800 dark:text-purple-100"
+                                  : item.category === "publication"
+                                    ? "bg-purple-100 text-purple-800 dark:bg-purple-800 dark:text-purple-100"
+                                    : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100"
                           }`}
                         >
                           {(item.category || "general")
@@ -365,15 +458,21 @@ const SeeNews: React.FC = () => {
                             (item.category || "general").slice(1)}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+                      <td
+                        className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300 cursor-pointer"
+                        onClick={() => handleNewsClick(item.id)}
+                      >
                         <div className="flex items-center">
                           <FaCalendarAlt className="mr-2 text-gray-400" />
                           {formatDate(item.publishDate)}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td
+                        className="px-6 py-4 whitespace-nowrap cursor-pointer"
+                        onClick={() => handleNewsClick(item.id)}
+                      >
                         <span
-                          className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                          className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
                             (item.status || "draft") === "published"
                               ? "bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100"
                               : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100"
@@ -384,26 +483,45 @@ const SeeNews: React.FC = () => {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleEdit(item.id);
-                          }}
-                          className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
-                        >
-                          Edit
-                        </button>
-                        {showDeleteControls && (
+                        <div className="flex justify-end gap-2">
+                          <button
+                            onClick={() => handleNewsClick(item.id)}
+                            className="p-1.5 text-gray-600 hover:text-blue-700 dark:text-gray-400 dark:hover:text-blue-300 bg-gray-100 dark:bg-gray-700 rounded-md transition-colors duration-200"
+                            title="View news"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleDelete(item.id);
+                              handleEdit(item.id);
                             }}
-                            className="ml-4 text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+                            className="p-1.5 text-gray-600 hover:text-blue-700 dark:text-gray-400 dark:hover:text-blue-300 bg-gray-100 dark:bg-gray-700 rounded-md transition-colors duration-200"
+                            title="Edit news"
                           >
-                            Delete
+                            <Edit className="w-4 h-4" />
                           </button>
-                        )}
+                          {showDeleteControls && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDelete(item.id);
+                              }}
+                              className={`p-1.5 ${
+                                deleteConfirm === item.id
+                                  ? "text-red-600 bg-red-100 dark:bg-red-900 dark:text-red-300"
+                                  : "text-gray-600 hover:text-red-700 bg-gray-100 dark:bg-gray-700 dark:text-gray-400 dark:hover:text-red-300"
+                              } rounded-md transition-colors duration-200`}
+                              title={
+                                deleteConfirm === item.id
+                                  ? "Confirm delete"
+                                  : "Delete news"
+                              }
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -411,9 +529,27 @@ const SeeNews: React.FC = () => {
                     <tr>
                       <td
                         colSpan={6}
-                        className="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400"
+                        className="px-6 py-12 text-center text-sm text-gray-500 dark:text-gray-400"
                       >
-                        No news found
+                        <div className="flex flex-col items-center">
+                          <svg
+                            className="w-12 h-12 text-gray-300 dark:text-gray-600 mb-4"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={1}
+                              d="M9.663 17h4.673M12 3v1m0 16v1m-9-9h1m16 0h1m-2.947-7.053l-.708.708M5.654 7.655l-.708-.708M5.654 16.345l-.708.708m14.702-7.398l-.708-.708"
+                            />
+                          </svg>
+                          <p className="font-medium">No news found</p>
+                          <p className="mt-1">
+                            Try adjusting your search or filter criteria
+                          </p>
+                        </div>
                       </td>
                     </tr>
                   )}
@@ -423,69 +559,153 @@ const SeeNews: React.FC = () => {
           </div>
 
           {/* News Cards - Alternative View */}
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {getFilteredNews().map((item) => (
               <div
                 key={item.id}
-                className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 space-y-4"
+                className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden border border-gray-100 dark:border-gray-700 hover:shadow-lg transition-shadow duration-300 flex flex-col h-full"
               >
-                <div className="flex justify-between items-start">
-                  <div className="space-y-2">
-                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
-                      {item.title}
-                    </h3>
-                    <div className="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
-                      <span className="flex items-center">
-                        <User className="w-4 h-4 mr-1" />
-                        {item.author?.name || "Unknown"}
-                      </span>
-                      <span className="flex items-center">
-                        <Calendar className="w-4 h-4 mr-1" />
-                        {formatDate(item.publishDate)}
-                      </span>
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs ${getCategoryColor(item.category || "general")}`}
-                      >
-                        {item.category || "general"}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={() => handleEdit(item.id)}
-                      className="p-2 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
-                      title="Edit news"
-                    >
-                      <Edit className="w-5 h-5" />
-                    </button>
-                    {showDeleteControls && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDelete(item.id);
-                        }}
-                        className="p-2 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
-                        title="Delete news"
-                      >
-                        <Trash2 className="w-5 h-5" />
-                      </button>
-                    )}
-                  </div>
-                </div>
-                <p className="text-gray-600 dark:text-gray-300">
-                  {truncateContent(item.content || "", 200)}
-                </p>
                 {item.image && (
-                  <div className="mt-4">
+                  <div className="relative h-48 overflow-hidden">
                     <img
                       src={item.image}
                       alt={item.title}
-                      className="w-full h-48 object-cover rounded-lg"
+                      className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
                     />
+                    <div className="absolute top-2 right-2">
+                      <span
+                        className={`px-3 py-1 inline-flex items-center text-xs leading-5 font-semibold rounded-full ${
+                          item.category === "announcement"
+                            ? "bg-blue-100 text-blue-800"
+                            : item.category === "event"
+                              ? "bg-green-100 text-green-800"
+                              : item.category === "achievement"
+                                ? "bg-yellow-100 text-yellow-800"
+                                : item.category === "publication"
+                                  ? "bg-purple-100 text-purple-800"
+                                  : "bg-gray-100 text-gray-800"
+                        } bg-opacity-90`}
+                      >
+                        {(item.category || "general").charAt(0).toUpperCase() +
+                          (item.category || "general").slice(1)}
+                      </span>
+                    </div>
                   </div>
                 )}
+                {!item.image && (
+                  <div className="h-32 bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 flex items-center justify-center">
+                    <ImageIcon className="h-12 w-12 text-gray-400 dark:text-gray-500" />
+                  </div>
+                )}
+                <div className="p-6 flex-grow flex flex-col">
+                  <div className="flex-grow">
+                    <h3
+                      className="text-lg font-semibold text-gray-900 dark:text-white mb-2 line-clamp-2 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer"
+                      onClick={() => handleNewsClick(item.id)}
+                    >
+                      {item.title}
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-300 text-sm mb-4 line-clamp-3">
+                      {truncateContent(item.content || "", 150)}
+                    </p>
+                  </div>
+                  <div className="mt-auto">
+                    <div className="flex items-center space-x-4 text-xs text-gray-500 dark:text-gray-400 mb-4">
+                      <span className="flex items-center">
+                        <User className="w-3.5 h-3.5 mr-1" />
+                        {item.author?.name || "Unknown"}
+                      </span>
+                      <span className="flex items-center">
+                        <Calendar className="w-3.5 h-3.5 mr-1" />
+                        {formatDate(item.publishDate)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center pt-4 border-t border-gray-100 dark:border-gray-700">
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          (item.status || "draft") === "published"
+                            ? "bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100"
+                            : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100"
+                        }`}
+                      >
+                        {(item.status || "draft").charAt(0).toUpperCase() +
+                          (item.status || "draft").slice(1)}
+                      </span>
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => handleNewsClick(item.id)}
+                          className="p-1.5 text-gray-600 hover:text-blue-700 dark:text-gray-400 dark:hover:text-blue-300 bg-gray-100 dark:bg-gray-700 rounded-md transition-colors duration-200"
+                          title="View news"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEdit(item.id);
+                          }}
+                          className="p-1.5 text-gray-600 hover:text-blue-700 dark:text-gray-400 dark:hover:text-blue-300 bg-gray-100 dark:bg-gray-700 rounded-md transition-colors duration-200"
+                          title="Edit news"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                        {showDeleteControls && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDelete(item.id);
+                            }}
+                            className={`p-1.5 ${
+                              deleteConfirm === item.id
+                                ? "text-red-600 bg-red-100 dark:bg-red-900 dark:text-red-300"
+                                : "text-gray-600 hover:text-red-700 bg-gray-100 dark:bg-gray-700 dark:text-gray-400 dark:hover:text-red-300"
+                            } rounded-md transition-colors duration-200`}
+                            title={
+                              deleteConfirm === item.id
+                                ? "Confirm delete"
+                                : "Delete news"
+                            }
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             ))}
+            {getFilteredNews().length === 0 && (
+              <div className="col-span-full flex flex-col items-center justify-center bg-white dark:bg-gray-800 rounded-xl shadow p-12">
+                <svg
+                  className="w-16 h-16 text-gray-300 dark:text-gray-600 mb-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1}
+                    d="M9.663 17h4.673M12 3v1m0 16v1m-9-9h1m16 0h1m-2.947-7.053l-.708.708M5.654 7.655l-.708-.708M5.654 16.345l-.708.708m14.702-7.398l-.708-.708"
+                  />
+                </svg>
+                <h3 className="text-xl font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  No news found
+                </h3>
+                <p className="text-gray-500 dark:text-gray-400 text-center max-w-md">
+                  Try adjusting your search criteria or add some news to get
+                  started.
+                </p>
+                <Link
+                  to="/dashboard/LabLeader/news/add"
+                  className="mt-6 flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                >
+                  <FaPlus className="mr-2" />
+                  Add News
+                </Link>
+              </div>
+            )}
           </div>
         </>
       )}

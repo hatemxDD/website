@@ -10,11 +10,29 @@ import { useAuth } from "../../../../contexts/AuthContext";
 import { api } from "../../../../services/api";
 import { Link } from "react-router-dom";
 import { useTheme } from "../../../../contexts/ThemeContext";
+import {
+  Team as ImportedTeam,
+  TeamMember as ImportedTeamMember,
+  teamsService,
+} from "../../../../services/teamsService";
+import {
+  Project as ImportedProject,
+  projectsService,
+  ProjectState,
+} from "../../../../services/projectsService";
+import { User, usersService } from "../../../../services/usersService";
+import { AxiosResponse } from "axios";
 
 interface Project {
   id: string;
   name: string;
-  status: "To Do" | "In Progress" | "Completed";
+  status:
+    | "To Do"
+    | "In Progress"
+    | "Completed"
+    | "Planning"
+    | "On Hold"
+    | "Cancelled";
   deadline: string;
   progress: number;
   teamName?: string;
@@ -22,9 +40,20 @@ interface Project {
   description?: string;
 }
 
-interface Team {
+interface TeamData {
   id: string;
   name: string;
+  acro: string;
+  leader: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  members: {
+    id: string;
+    name: string;
+    email: string;
+  }[];
 }
 
 interface StatCardProps {
@@ -41,6 +70,7 @@ interface TeamMember {
   role: string;
   email: string;
   photoUrl?: string;
+  isTeamLeader?: boolean;
 }
 
 const StatCard: React.FC<StatCardProps> = ({
@@ -76,11 +106,12 @@ const MemberOverview: React.FC = () => {
   const { user } = useAuth();
   const { isDarkMode } = useTheme();
   const [teamProjects, setTeamProjects] = useState<Project[]>([]);
-  const [teams, setTeams] = useState<Team[]>([]);
+  const [team, setTeam] = useState<TeamData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [completionRate, setCompletionRate] = useState(0);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [teamLeader, setTeamLeader] = useState<TeamMember | null>(null);
 
   useEffect(() => {
     const fetchMemberData = async () => {
@@ -89,80 +120,146 @@ const MemberOverview: React.FC = () => {
       try {
         setLoading(true);
 
-        // In a real app, fetch from API
-        // Sample data for demonstration
-        const sampleProjects: Project[] = [
-          {
-            id: "1",
-            name: "Team Genomics Analysis",
-            status: "In Progress",
-            deadline: "2024-05-30",
-            progress: 45,
-            teamName: "Genomics Research Team",
-            description: "Analysis of genomic data from recent samples",
-          },
-          {
-            id: "2",
-            name: "Clinical Data Integration",
-            status: "To Do",
-            deadline: "2024-06-15",
-            progress: 10,
-            teamName: "Genomics Research Team",
-            description: "Integrating clinical data with genomic findings",
-          },
-          {
-            id: "3",
-            name: "Publication Draft",
-            status: "Completed",
-            deadline: "2024-04-15",
-            progress: 100,
-            teamName: "Genomics Research Team",
-            description: "Preparation of manuscript for journal submission",
-          },
-        ];
+        // Fetch user's team
+        const teams: ImportedTeam[] = await teamsService.getAll();
 
-        setTeamProjects(sampleProjects);
+        // Filter teams where the current user is a member or leader
+        const userTeams = teams.filter((team) => {
+          // Check if user is a team member
+          const isMember = team.members?.some(
+            (member) => member.userId === user.id || member.user?.id === user.id
+          );
+          return isMember;
+        });
 
-        // Calculate completion rate
-        const completedProjects = sampleProjects.filter(
-          (project) => project.status === "Completed"
-        ).length;
+        if (!userTeams.length) {
+          setError("You are not a member of any team");
+          setLoading(false);
+          return;
+        }
 
-        setCompletionRate(
-          Math.round((completedProjects / sampleProjects.length) * 100)
+        const userTeam = userTeams[0];
+
+        // Fetch team members using getMembers from teamsService
+        const teamMembersResponse = await userTeam.members;
+
+        // Fetch team projects
+        const teamProjectsResponse = await projectsService.getByTeam(
+          Number(userTeam.id)
         );
 
-        // Team data
-        setTeams([{ id: "1", name: "Genomics Research Team" }]);
+        // Process projects data
+        if (teamProjectsResponse && Array.isArray(teamProjectsResponse)) {
+          const formattedProjects: Project[] = teamProjectsResponse.map(
+            (project: ImportedProject) => ({
+              id: String(project.id || ""),
+              name: project.name || "",
+              status: mapProjectState(project.state),
+              deadline: project.expectedEndDate || new Date().toISOString(),
+              progress: calculateProjectProgress(project),
+              teamName: userTeam.name,
+              teamId: String(userTeam.id),
+              description: project.description || "",
+            })
+          );
 
-        // Team members
-        const teamMembersData: TeamMember[] = [
-          {
-            id: 1,
-            name: "Jane Smith",
-            role: "Team Leader",
-            email: "jane@research.org",
+          setTeamProjects(formattedProjects);
+
+          // Calculate completion rate
+          const completedProjects = formattedProjects.filter(
+            (p) => p.status === "Completed"
+          ).length;
+          const completionPercentage =
+            formattedProjects.length > 0
+              ? Math.round((completedProjects / formattedProjects.length) * 100)
+              : 0;
+
+          setCompletionRate(completionPercentage);
+        }
+
+        // Convert ImportedTeam to TeamData format
+        const teamData: TeamData = {
+          id: String(userTeam.id || ""),
+          name: userTeam.name || "",
+          acro: userTeam.acro || "",
+          leader: {
+            id: String(userTeam.leader?.id || ""),
+            name: userTeam.leader?.name || "",
+            email: userTeam.leader?.email || "",
           },
-          {
-            id: 2,
-            name: "John Doe",
-            role: "Senior Researcher",
-            email: "john@research.org",
-          },
-          {
-            id: 3,
-            name: "Maria Lopez",
-            role: "Research Assistant",
-            email: "maria@research.org",
-          },
-          {
-            id: 4,
-            name: "Alex Chen",
-            role: "Researcher",
-            email: "alex@research.org",
-          },
-        ];
-        setTeamMembers(teamMembersData);
+          members: (userTeam.memberUsers || []).map((member) => ({
+            id: String(member.id),
+            name: member.name,
+            email: member.email,
+          })),
+        };
+
+        setTeam(teamData);
+
+        // Set team leader data
+        const teamLeaderData = teamData.leader;
+        let teamLeaderUser: User | null = null;
+
+        try {
+          // Fetch full team leader details if leader ID is available
+          if (userTeam.leaderId) {
+            const leaderResponse = await usersService.getById(
+              Number(userTeam.leaderId)
+            );
+            teamLeaderUser = leaderResponse;
+          }
+        } catch (error) {
+          console.error("Error fetching team leader details:", error);
+        }
+
+        const teamLeaderFormatted: TeamMember = {
+          id: teamLeaderData.id,
+          name: teamLeaderData.name || teamLeaderUser?.name || "",
+          email: teamLeaderData.email || teamLeaderUser?.email || "",
+          role: "Team Leader",
+          isTeamLeader: true,
+          photoUrl: teamLeaderUser?.image || teamLeaderUser?.photo,
+        };
+
+        // Process detailed team members with user info
+        const memberPromises = teamMembersResponse
+          ? teamMembersResponse
+              .filter((member) => member.userId !== userTeam.leaderId)
+              .map(async (member) => {
+                // Fetch detailed user information for each team member
+                try {
+                  const userData = await usersService.getById(
+                    Number(member.userId)
+                  );
+
+                  return {
+                    id: String(member.userId),
+                    name: userData.name || "",
+                    email: userData.email || "",
+                    role: "Team Member",
+                    isTeamLeader: false,
+                    photoUrl: userData.image || userData.photo,
+                  };
+                } catch (error) {
+                  console.error(
+                    `Error fetching user data for ID ${member.userId}:`,
+                    error
+                  );
+                  return {
+                    id: String(member.userId),
+                    name: member.user?.name || "Unknown User",
+                    email: member.user?.email || "",
+                    role: "Team Member",
+                    isTeamLeader: false,
+                  };
+                }
+              })
+          : [];
+
+        const teamMembersFormatted = await Promise.all(memberPromises);
+
+        setTeamLeader(teamLeaderFormatted);
+        setTeamMembers(teamMembersFormatted);
       } catch (err) {
         console.error("Error fetching member dashboard data:", err);
         setError("Failed to load dashboard data");
@@ -174,6 +271,50 @@ const MemberOverview: React.FC = () => {
     fetchMemberData();
   }, [user?.id]);
 
+  // Helper function to map project state to status
+  const mapProjectState = (
+    state?: ProjectState
+  ):
+    | "To Do"
+    | "In Progress"
+    | "Completed"
+    | "Planning"
+    | "On Hold"
+    | "Cancelled" => {
+    if (!state) return "To Do";
+
+    switch (state) {
+      case "COMPLETED":
+        return "Completed";
+      case "IN_PROGRESS":
+        return "In Progress";
+      case "PLANNING":
+        return "Planning";
+      case "ON_HOLD":
+        return "On Hold";
+      case "CANCELLED":
+        return "Cancelled";
+      default:
+        return "To Do";
+    }
+  };
+
+  // Helper function to calculate project progress
+  const calculateProjectProgress = (project: ImportedProject): number => {
+    if (!project) return 0;
+
+    if (project.state === "COMPLETED") return 100;
+    if (
+      project.state === "PLANNING" ||
+      project.state === "ON_HOLD" ||
+      project.state === "CANCELLED"
+    )
+      return 0;
+
+    // For in-progress projects, you can use a default value
+    return 50;
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "Completed":
@@ -182,6 +323,12 @@ const MemberOverview: React.FC = () => {
         return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300";
       case "To Do":
         return "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300";
+      case "Planning":
+        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300";
+      case "On Hold":
+        return "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300";
+      case "Cancelled":
+        return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300";
       default:
         return "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300";
     }
@@ -195,6 +342,12 @@ const MemberOverview: React.FC = () => {
         return <FaClock className="text-blue-500" />;
       case "To Do":
         return <FaExclamationCircle className="text-yellow-500" />;
+      case "Planning":
+        return <FaClock className="text-yellow-500" />;
+      case "On Hold":
+        return <FaExclamationCircle className="text-orange-500" />;
+      case "Cancelled":
+        return <FaExclamationCircle className="text-red-500" />;
       default:
         return null;
     }
@@ -252,10 +405,10 @@ const MemberOverview: React.FC = () => {
         />
         <StatCard
           title="My Team"
-          value={teams.length}
+          value={team ? 1 : 0}
           icon={<Users className="h-6 w-6 text-white" />}
           color="bg-purple-500"
-          trend={teams.length > 0 ? teams[0].name : "Not in any team"}
+          trend={team ? team.name : "Not in any team"}
         />
         <StatCard
           title="Completion Rate"
@@ -283,7 +436,7 @@ const MemberOverview: React.FC = () => {
         {teamProjects.length === 0 ? (
           <div className="text-center py-8 bg-gray-50 dark:bg-gray-700 rounded-lg">
             <p className="text-gray-500 dark:text-gray-400">
-              No projects found.
+              No projects found for your team.
             </p>
           </div>
         ) : (
@@ -308,10 +461,10 @@ const MemberOverview: React.FC = () => {
                     {project.description}
                   </div>
                 )}
-                {project.teamName && (
+                {team && (
                   <div className="flex items-center text-sm text-gray-500 dark:text-gray-400 mb-3">
                     <FaUsers className="mr-2" />
-                    <span>{project.teamName}</span>
+                    <span>{team.name}</span>
                   </div>
                 )}
                 <div className="w-full mt-2">
@@ -365,10 +518,52 @@ const MemberOverview: React.FC = () => {
           </h2>
         </div>
 
+        {/* Team Leader */}
+        {teamLeader && (
+          <div className="mb-6">
+            <h3 className="text-md font-medium text-gray-700 dark:text-gray-300 mb-3">
+              Team Leader
+            </h3>
+            <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+              <div className="flex items-center">
+                <div className="flex-shrink-0 mr-3">
+                  {teamLeader.photoUrl ? (
+                    <img
+                      src={teamLeader.photoUrl}
+                      alt={teamLeader.name}
+                      className="w-12 h-12 rounded-full object-cover border border-gray-200 dark:border-gray-700"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center text-purple-700 dark:text-purple-300 font-medium">
+                      {teamLeader.name.substring(0, 2)}
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <h3 className="font-medium text-gray-800 dark:text-white text-lg">
+                    {teamLeader.name}
+                  </h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    {teamLeader.role}
+                  </p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500">
+                    {teamLeader.email}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Other Team Members */}
+        <h3 className="text-md font-medium text-gray-700 dark:text-gray-300 mb-3">
+          Team Members
+        </h3>
+
         {teamMembers.length === 0 ? (
           <div className="text-center py-8 bg-gray-50 dark:bg-gray-700 rounded-lg">
             <p className="text-gray-500 dark:text-gray-400">
-              No team members found.
+              No other team members found.
             </p>
           </div>
         ) : (
@@ -376,31 +571,33 @@ const MemberOverview: React.FC = () => {
             {teamMembers.map((member) => (
               <div
                 key={member.id}
-                className="flex items-center p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4"
               >
-                <div className="flex-shrink-0 mr-3">
-                  {member.photoUrl ? (
-                    <img
-                      src={member.photoUrl}
-                      alt={member.name}
-                      className="w-10 h-10 rounded-full object-cover border border-gray-200 dark:border-gray-700"
-                    />
-                  ) : (
-                    <div className="w-10 h-10 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center text-gray-700 dark:text-gray-300 font-medium">
-                      {member.name.substring(0, 2)}
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <h3 className="font-medium text-gray-800 dark:text-white">
-                    {member.name}
-                  </h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {member.role}
-                  </p>
-                  <p className="text-xs text-gray-400 dark:text-gray-500">
-                    {member.email}
-                  </p>
+                <div className="flex items-center">
+                  <div className="flex-shrink-0 mr-3">
+                    {member.photoUrl ? (
+                      <img
+                        src={member.photoUrl}
+                        alt={member.name}
+                        className="w-12 h-12 rounded-full object-cover border border-gray-200 dark:border-gray-700"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center text-gray-700 dark:text-gray-300 font-medium">
+                        {member.name.substring(0, 2)}
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <h3 className="font-medium text-gray-800 dark:text-white text-lg">
+                      {member.name}
+                    </h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      {member.role}
+                    </p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500">
+                      {member.email}
+                    </p>
+                  </div>
                 </div>
               </div>
             ))}

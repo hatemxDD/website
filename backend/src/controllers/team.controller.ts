@@ -536,7 +536,7 @@ const teamController = {
 
       const teamMembers = await prisma.teamMember.findMany({
         where: {
-          teamId: Number(teamId),
+          teamId: parseInt(teamId),
         },
         include: {
           user: {
