@@ -31,7 +31,7 @@ interface Member {
   team?: string;
   createdAt: string;
   academicGrade?: string;
-  photo?: string;
+  image?: string;
 }
 
 interface SeeMembersProps {
@@ -72,7 +72,7 @@ const SeeMembers: React.FC<SeeMembersProps> = ({ title = "Lab Members" }) => {
           team: user.team || "",
           createdAt: user.createdAt || new Date().toISOString().split("T")[0],
           academicGrade: "Member", // Default value
-          photo: user.photo,
+          image: user.image,
         }));
 
         setMembersData(formattedMembers);
@@ -152,7 +152,7 @@ const SeeMembers: React.FC<SeeMembersProps> = ({ title = "Lab Members" }) => {
     }
 
     // Apply join date filter
-    if (filterJoinDate ) {
+    if (filterJoinDate) {
       filtered = filtered.filter(
         (member) => member.createdAt === filterJoinDate
       );
@@ -182,18 +182,48 @@ const SeeMembers: React.FC<SeeMembersProps> = ({ title = "Lab Members" }) => {
   // Add a simple delete handler
   const handleDelete = async (id: number) => {
     try {
-      if (
-        confirm(
-          "Are you sure you want to delete this member? This will remove them from all teams."
-        )
-      ) {
-        try {
-          // First, get detailed user information including team memberships
-          const userDetails = (await usersService.getById(id)) as UserWithTeams;
-          console.log("User details:", userDetails);
+      // First, get detailed user information including team memberships
+      const userDetails = (await usersService.getById(id)) as UserWithTeams;
+      console.log("User details:", userDetails);
 
-          // If user is part of any teams, remove them from those teams first
+      let confirmMessage =
+        "Are you sure you want to delete this member? This will remove them from all teams.";
+
+      // Check if user is a team leader
+      const isTeamLeader =
+        userDetails.role === Role.TeamLeader ||
+        (userDetails.leadingTeams && userDetails.leadingTeams.length > 0);
+
+      if (isTeamLeader) {
+        confirmMessage =
+          "WARNING: This user is a Team Leader. Deleting this member will also delete their team. Are you sure you want to proceed?";
+      }
+
+      if (confirm(confirmMessage)) {
+        try {
+          // If user is a team leader, delete their teams first
           if (
+            isTeamLeader &&
+            userDetails.leadingTeams &&
+            userDetails.leadingTeams.length > 0
+          ) {
+            try {
+              const deleteTeamPromises = userDetails.leadingTeams.map((team) =>
+                teamsService.delete(team.id)
+              );
+
+              // Wait for all team deletion operations to complete
+              await Promise.all(deleteTeamPromises);
+              console.log(
+                `Deleted ${userDetails.leadingTeams.length} teams led by this user`
+              );
+            } catch (teamError) {
+              console.error("Error deleting teams:", teamError);
+              // Continue with user deletion even if team deletion fails
+            }
+          }
+          // If user is part of any teams as a member, remove them from those teams
+          else if (
             userDetails.memberOfTeams &&
             userDetails.memberOfTeams.length > 0
           ) {
@@ -213,8 +243,8 @@ const SeeMembers: React.FC<SeeMembersProps> = ({ title = "Lab Members" }) => {
             }
           }
         } catch (userDetailsError) {
-          console.error("Error getting user details:", userDetailsError);
-          // If we can't get user details, proceed with just deleting the user
+          console.error("Error processing user memberships:", userDetailsError);
+          // If we can't process user details, proceed with just deleting the user
         }
 
         // Now delete the user
@@ -400,9 +430,9 @@ const SeeMembers: React.FC<SeeMembersProps> = ({ title = "Lab Members" }) => {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="flex-shrink-0 h-10 w-10">
-                            {member.photo ? (
+                            {member.image ? (
                               <img
-                                src={member.photo}
+                                src={member.image}
                                 alt={member.name}
                                 className="h-10 w-10 rounded-full object-cover"
                               />
@@ -455,9 +485,14 @@ const SeeMembers: React.FC<SeeMembersProps> = ({ title = "Lab Members" }) => {
                         <button
                           onClick={() => {
                             try {
-                              navigate(
-                                `/dashboard/LabLeader/members/edit/${member.id}`
-                              );
+                              // For Lab Leader, go to profile page instead of edit page
+                              if (member.role === "LabLeader") {
+                                navigate(`/dashboard/LabLeader/profile`);
+                              } else {
+                                navigate(
+                                  `/dashboard/LabLeader/members/edit/${member.id}`
+                                );
+                              }
                             } catch (error) {
                               console.error("Navigation error:", error);
                               alert("Could not navigate to edit page");
@@ -465,9 +500,11 @@ const SeeMembers: React.FC<SeeMembersProps> = ({ title = "Lab Members" }) => {
                           }}
                           className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 mr-3"
                         >
-                          Edit
+                          {member.role === "LabLeader"
+                            ? "View Profile"
+                            : "Edit"}
                         </button>
-                        {showDeleteControls && (
+                        {showDeleteControls && member.role !== "LabLeader" && (
                           <button
                             onClick={(e) => {
                               e.stopPropagation();

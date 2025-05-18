@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaSpinner } from "react-icons/fa";
 import { newsService, News } from "../../services/newsService";
+import LoadingSkeleton from "../Common/LoadingSkeleton";
 import "./NewsList.css";
 
 export const NewsList: React.FC = () => {
@@ -30,32 +30,61 @@ export const NewsList: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="newslist-container loading-state">
-        <FaSpinner className="spinner" />
-        <p>Loading news...</p>
+      <div className="newslist-container dark:bg-gray-800 dark:text-gray-200">
+        <div className="groups-header dark:bg-gray-800 dark:text-white">
+          <LoadingSkeleton type="title" width="60%" />
+          <div className="header-decoration">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+          <LoadingSkeleton type="paragraph" width="80%" />
+        </div>
+
+        <div className="newslist-grid">
+          {[1, 2, 3, 4, 5, 6].map((item) => (
+            <div
+              key={item}
+              className="newslist-card dark:bg-gray-700 dark:border-gray-600"
+            >
+              <LoadingSkeleton type="image" height="200px" />
+              <div className="newslist-content" style={{ padding: "15px" }}>
+                <LoadingSkeleton type="title" width="90%" />
+                <div style={{ marginTop: "10px" }}>
+                  <LoadingSkeleton type="text" width="40%" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="newslist-container error-state">
+      <div className="newslist-container error-state dark:bg-gray-800 dark:text-gray-200">
         <p>{error}</p>
       </div>
     );
   }
 
   return (
-    <div className="newslist-container">
-      <div className="newslist-header">
-        <h1>Latest Research News</h1>
-        <p>
+    <div className="newslist-container dark:bg-gray-800">
+      <div className="groups-header dark:bg-gray-800 dark:text-white">
+        <h1 className="text-gradient dark:text-white">Latest Research News</h1>
+        <div className="header-decoration">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+        <p className="dark:text-gray-300">
           Stay updated with our latest research breakthroughs and achievements
         </p>
       </div>
 
       {news.length === 0 ? (
-        <div className="newslist-empty">
+        <div className="newslist-empty dark:text-gray-300">
           <p>No news articles available at this time.</p>
         </div>
       ) : (
@@ -63,7 +92,7 @@ export const NewsList: React.FC = () => {
           {news.map((newsItem) => (
             <div
               key={newsItem.id}
-              className="newslist-card"
+              className="newslist-card dark:bg-gray-700 dark:border-gray-600 dark:hover:bg-gray-600"
               onClick={() => navigate(`/news/${newsItem.id}`)}
             >
               <div className="newslist-image-wrapper">
@@ -74,17 +103,19 @@ export const NewsList: React.FC = () => {
                   }
                   alt={newsItem.title}
                 />
-                <div className="newslist-overlay">
-                  <span className="newslist-category">Research</span>
-                  <span className="newslist-date">
+                <div className="newslist-overlay dark:bg-opacity-70">
+                  <span className="newslist-category dark:bg-blue-600 dark:text-white">
+                    Research
+                  </span>
+                  <span className="newslist-date dark:text-gray-300">
                     {new Date(newsItem.createdAt).toLocaleDateString()}
                   </span>
                 </div>
               </div>
-              <div className="newslist-content">
-                <h2>{newsItem.title}</h2>
+              <div className="newslist-content dark:text-white">
+                <h2 className="dark:text-white">{newsItem.title}</h2>
                 <div className="newslist-author">
-                  <span className="newslist-author-name">
+                  <span className="newslist-author-name dark:text-gray-300">
                     {newsItem.author?.name || "Research Team"}
                   </span>
                 </div>

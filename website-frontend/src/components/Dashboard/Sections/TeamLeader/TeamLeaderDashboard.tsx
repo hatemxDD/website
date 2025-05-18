@@ -16,13 +16,13 @@ import {
   FaUser,
   FaTasks,
   FaPlus,
-  FaBook,
   FaNewspaper,
   FaBell,
   FaSignOutAlt,
   FaChevronDown,
   FaBars,
 } from "react-icons/fa";
+import { teamsService } from "../../../../services/teamsService";
 
 import TeamLeaderOverview from "./TeamLeaderOverview";
 import TeamManagement from "./TeamManagement";
@@ -34,7 +34,6 @@ import AddMemberToTeam from "./AddMemberToTeam";
 import AddTeam from "../Create/AddTeam";
 import AddProject from "../Create/AddProject";
 // Use the correct role type from Prisma schema
-type UserRole = "TeamLeader";
 
 interface SubMenuItem {
   id: string;
@@ -55,10 +54,11 @@ const TeamLeaderDashboard: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [activeSubmenu, setActiveSubmenu] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [hasTeam, setHasTeam] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
-  const { isDarkMode, toggleDarkMode } = useTheme();
+  const { isDarkMode } = useTheme();
 
   useEffect(() => {
     const handleResize = () => {
@@ -74,6 +74,22 @@ const TeamLeaderDashboard: React.FC = () => {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  // Check if team leader already has a team
+  useEffect(() => {
+    const checkIfHasTeam = async () => {
+      try {
+        const response = await teamsService.getMyTeams();
+        const myTeams = Array.isArray(response) ? response : response.led || [];
+        setHasTeam(myTeams.length > 0);
+      } catch (error) {
+        console.error("Error checking if user has a team:", error);
+        setHasTeam(false);
+      }
+    };
+
+    checkIfHasTeam();
+  }, [user]);
 
   const menuItems: MenuItem[] = [
     {
@@ -93,12 +109,17 @@ const TeamLeaderDashboard: React.FC = () => {
           icon: <FaUsers className="w-4 h-4" />,
           label: "View Team",
         },
-        {
-          id: "create-team",
-          path: "/dashboard/TeamLeader/my-team/create",
-          icon: <FaPlus className="w-4 h-4" />,
-          label: "Create Team",
-        },
+        // Only show Create Team option if the team leader doesn't have a team yet
+        ...(hasTeam
+          ? []
+          : [
+              {
+                id: "create-team",
+                path: "/dashboard/TeamLeader/my-team/create",
+                icon: <FaPlus className="w-4 h-4" />,
+                label: "Create Team",
+              },
+            ]),
         {
           id: "add-member",
           path: "/dashboard/TeamLeader/my-team/add",
@@ -181,7 +202,6 @@ const TeamLeaderDashboard: React.FC = () => {
   };
 
   const bgColor = isDarkMode ? "bg-gray-900" : "bg-gray-50";
-  const textColor = isDarkMode ? "text-white" : "text-gray-800";
 
   return (
     <div className={`flex h-screen ${bgColor} transition-colors duration-300`}>
@@ -336,7 +356,16 @@ const TeamLeaderDashboard: React.FC = () => {
             <Route path="my-team">
               <Route index element={<TeamManagement />} />
               <Route path="add" element={<AddMemberToTeam />} />
-              <Route path="create" element={<AddTeam />} />
+              <Route
+                path="create"
+                element={
+                  hasTeam ? (
+                    <Navigate to="/dashboard/TeamLeader/my-team" replace />
+                  ) : (
+                    <AddTeam />
+                  )
+                }
+              />
             </Route>
 
             {/* Projects Routes */}

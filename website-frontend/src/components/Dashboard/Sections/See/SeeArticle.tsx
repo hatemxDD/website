@@ -30,9 +30,11 @@ const SeeArticle: React.FC = () => {
         setLoading(true);
         setError(null);
 
-        const response = await articlesService.getAll();
-        console.log("Articles from API:", response);
 
+        // Fetch only articles by the current user
+        const response = await articlesService.getByAuthor(user?.id || 0);
+        console.log("User's articles from API:", response);
+        console.log("User's ID:", user?.id);
         // Ensure coAuthors property exists even if it's not returned from backend
         const articlesWithCoAuthors = response.map((article) => ({
           ...article,
@@ -42,14 +44,14 @@ const SeeArticle: React.FC = () => {
         setArticles(articlesWithCoAuthors);
       } catch (err) {
         console.error("Error fetching articles:", err);
-        setError("Failed to load articles. Please try again later.");
+        setError("Failed to load your articles. Please try again later.");
       } finally {
         setLoading(false);
       }
     };
 
     fetchArticles();
-  }, []);
+  }, [user]);
 
   const handleAddArticle = () => {
     navigate(`/dashboard/${user?.role}/articles/add`);

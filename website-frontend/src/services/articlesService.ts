@@ -74,5 +74,5 @@ export const articlesService = {
    * Get articles by author ID
    */
   getByAuthor: (authorId: number) =>
-    api.get<Article[]>(`/api/users/${authorId}/articles`),
+    api.get<Article[]>(`/api/articles/author/${authorId}`),
 };

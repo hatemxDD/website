@@ -1,0 +1,354 @@
+/* Card Loading State */
+.loading-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-width: 100%;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  background-color: #ffffff;
+  margin-bottom: 1.5rem;
+}
+
+.loading-card-content {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.loading-card-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+/* List Loading State */
+.loading-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+}
+
+.loading-list-item {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  background-color: #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  align-items: center;
+}
+
+.loading-list-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.loading-list-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* Detail Loading State */
+.loading-detail {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  background-color: #ffffff;
+  border-radius: 1rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.loading-detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.loading-detail-meta {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+}
+
+.loading-detail-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.loading-detail-image {
+  margin-bottom: 1.5rem;
+  border-radius: 1rem;
+  overflow: hidden;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.loading-detail-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  background-color: #ffffff;
+  border-radius: 1rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.loading-detail-tags {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.loading-detail-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.loading-detail-body {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Table Loading State */
+.loading-table {
+  width: 100%;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.loading-table-header {
+  display: flex;
+  padding: 1rem;
+  background-color: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.loading-table-row {
+  display: flex;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #f1f5f9;
+  background-color: #ffffff;
+}
+
+/* Profile Loading State */
+.loading-profile {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+  background-color: #ffffff;
+  border-radius: 1rem;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+}
+
+.loading-profile-header {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 2rem;
+  align-items: center;
+}
+
+.loading-profile-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.loading-profile-tags {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.loading-profile-content {
+  margin-bottom: 2rem;
+}
+
+.loading-profile-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+/* Gallery Loading State */
+.loading-gallery {
+  width: 100%;
+}
+
+.loading-gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.loading-gallery-item {
+  border-radius: 0.5rem;
+  overflow: hidden;
+  background-color: #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.loading-gallery-caption {
+  padding: 0.75rem;
+  background-color: #ffffff;
+}
+
+/* Grid Loading State */
+.loading-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.loading-grid-item {
+  display: flex;
+  flex-direction: column;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  background-color: #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.loading-grid-content {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* Article Loading State */
+.loading-article {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+  background-color: #ffffff;
+  border-radius: 1rem;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+}
+
+.loading-article-meta {
+  display: flex;
+  gap: 1.5rem;
+  margin: 1rem 0 2rem;
+}
+
+.loading-article-content {
+  margin-top: 2rem;
+}
+
+/* Form Loading State */
+.loading-form {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 2rem;
+  background-color: #ffffff;
+  border-radius: 1rem;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+}
+
+.loading-form-group {
+  margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.loading-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 2rem;
+}
+
+/* Dark mode support */
+.dark .loading-card,
+.dark .loading-list-item,
+.dark .loading-detail,
+.dark .loading-detail-info,
+.dark .loading-table-row,
+.dark .loading-profile,
+.dark .loading-gallery-item,
+.dark .loading-gallery-caption,
+.dark .loading-grid-item,
+.dark .loading-article,
+.dark .loading-form {
+  background-color: #1f2937;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.dark .loading-table-header {
+  background-color: #374151;
+  border-bottom-color: #4b5563;
+}
+
+.dark .loading-table-row {
+  border-bottom-color: #374151;
+}
+
+.dark .loading-profile-actions {
+  border-top-color: #374151;
+}
+
+/* Responsive styles */
+@media (min-width: 1024px) {
+  .loading-detail-content {
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr;
+    gap: 2rem;
+  }
+
+  .loading-detail-image {
+    margin-bottom: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .loading-detail,
+  .loading-profile,
+  .loading-article,
+  .loading-form {
+    padding: 1.5rem;
+  }
+
+  .loading-detail-header,
+  .loading-profile-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .loading-detail-meta {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .loading-gallery-grid,
+  .loading-grid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .loading-gallery-grid,
+  .loading-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .loading-list-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

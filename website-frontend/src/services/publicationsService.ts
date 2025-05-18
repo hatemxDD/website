@@ -7,11 +7,8 @@ export interface Publication {
   date: string;
   journal: string;
   abstract: string;
-  category: string;
-  doi: string;
   image: string;
   impactFactor?: string;
-  citations?: number;
 }
 
 export interface CreatePublicationData {
@@ -20,11 +17,8 @@ export interface CreatePublicationData {
   date: string;
   journal: string;
   abstract: string;
-  category: string;
-  doi: string;
   image: string;
   impactFactor?: string;
-  citations?: number;
 }
 
 export interface UpdatePublicationData {
@@ -33,11 +27,8 @@ export interface UpdatePublicationData {
   date?: string;
   journal?: string;
   abstract?: string;
-  category?: string;
-  doi?: string;
   image?: string;
   impactFactor?: string;
-  citations?: number;
 }
 
 export const publicationsService = {

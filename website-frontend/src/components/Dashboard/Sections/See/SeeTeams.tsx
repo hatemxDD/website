@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { FaPlus, FaSearch, FaFilter, FaUsers } from "react-icons/fa";
 import { teamsService } from "../../../../services/teamsService";
+import { projectsService } from "../../../../services/projectsService";
 
 interface Team {
   id: number;
@@ -74,27 +75,42 @@ const SeeTeams: React.FC = () => {
   });
 
   const handleDeleteTeam = async (id: number) => {
-    if (window.confirm("Are you sure you want to delete this team?")) {
-      try {
+    try {
+      // First fetch team projects to check if there are any
+      const projects = await projectsService.getByTeam(id);
+
+      // Create confirmation message with project information
+      let confirmMessage = "Are you sure you want to delete this team?";
+
+      if (projects.length > 0) {
+        confirmMessage = `This team has ${projects.length} associated project(s). Deleting this team will also delete all its projects. Are you sure you want to proceed?`;
+      }
+
+      if (window.confirm(confirmMessage)) {
+        // Delete the team (the backend handles cascading deletion)
         await teamsService.delete(id);
+
+        // Update UI
         setTeams(teams.filter((team) => team.id !== id));
+
         // Show success message
         const successMessage = document.createElement("div");
         successMessage.className =
           "fixed bottom-4 right-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded z-50";
-        successMessage.textContent = "Team has been removed successfully.";
+        successMessage.textContent =
+          "Team and its projects have been removed successfully.";
         document.body.appendChild(successMessage);
         setTimeout(() => document.body.removeChild(successMessage), 3000);
-      } catch (err) {
-        console.error("Error deleting team:", err);
-        // Show error message
-        const errorMessage = document.createElement("div");
-        errorMessage.className =
-          "fixed bottom-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded z-50";
-        errorMessage.textContent = "Failed to delete team. Please try again.";
-        document.body.appendChild(errorMessage);
-        setTimeout(() => document.body.removeChild(errorMessage), 3000);
       }
+    } catch (err) {
+      console.error("Error deleting team:", err);
+      // Show error message
+      const errorMessage = document.createElement("div");
+      errorMessage.className =
+        "fixed bottom-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded z-50";
+      errorMessage.textContent = "Failed to delete team. Please try again.";
+      document.body.appendChild(errorMessage);
+      setTimeout(() => document.body.removeChild(errorMessage), 3000);
     }
   };
 

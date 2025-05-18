@@ -1,13 +1,3 @@
-/**
- * Group Component
- *
- * Displays a list of research teams/groups.
- * Features:
- * - Grid layout of team cards
- * - Team information display
- * - Navigation to team details
- */
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -15,11 +5,12 @@ import {
   FaUsers,
   FaProjectDiagram,
   FaArrowRight,
-  FaSpinner,
+  FaStar,
 } from "react-icons/fa";
 import "./Group.css";
 import { teamsService, Team } from "../../services/teamsService";
 import { projectsService } from "../../services/projectsService";
+import LoadingState from "../Common/LoadingState";
 
 interface TeamWithCounts extends Team {
   memberCount: number;
@@ -29,7 +20,6 @@ interface TeamWithCounts extends Team {
 const Group: React.FC = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
-  const [filter, setFilter] = useState("all");
   const [teams, setTeams] = useState<TeamWithCounts[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -70,53 +60,54 @@ const Group: React.FC = () => {
   }, []);
 
   const filteredTeams = teams.filter((team) => {
-    const matchesSearch =
+    return (
       team.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       team.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      false;
-    if (filter === "all") return matchesSearch;
-    if (filter === "active") return matchesSearch && team.projectCount > 0;
-    if (filter === "members") return matchesSearch && team.memberCount >= 3;
-    return matchesSearch;
+      false
+    );
   });
 
   return (
-    <div className="groups-container">
-      <div className="groups-header">
-        <h1>Research Teams</h1>
-        <p>Explore our specialized research teams and their innovative work</p>
+    <div className="groups-container dark:bg-gray-800">
+      <div className="groups-header dark:bg-gray-800">
+        <h1 className="text-gradient dark:text-white">Research Teams</h1>
+        <div className="header-decoration">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+        <p className="dark:text-gray-300">
+          Explore our specialized research teams and their innovative work
+        </p>
       </div>
 
-      <div className="search-filter">
-        <div className="search-wrapper">
-          <FaSearch className="search-icon" />
-          <input
-            type="text"
-            placeholder="Search by name or description..."
-            className="search-input"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+      <div className="search-filter-container">
+        <div className="search-filter dark:bg-gray-700">
+          <div className="search-wrapper dark:bg-gray-600">
+            <FaSearch className="search-icon dark:text-gray-300" />
+            <input
+              type="text"
+              placeholder="Search by name or description..."
+              className="search-input dark:bg-gray-600 dark:text-white dark:placeholder-gray-400 dark:border-gray-500"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
         </div>
-        <select
-          className="filter-select"
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-        >
-          <option value="all">All Teams</option>
-          <option value="active">Active Projects</option>
-          <option value="members">Large Teams (3+ members)</option>
-        </select>
       </div>
 
       {loading ? (
-        <div className="loading-state">
-          <FaSpinner className="spinner" />
-          <p>Loading teams...</p>
-        </div>
+        <LoadingState
+          type="grid"
+          count={6}
+          withImage={true}
+          withActions={true}
+          className="groups-loading"
+        />
       ) : error ? (
-        <div className="error-state">
+        <div className="error-state dark:bg-gray-800 dark:text-gray-300">
           <p>{error}</p>
+          <button className="retry-button">Try Again</button>
         </div>
       ) : (
         <>
@@ -124,38 +115,48 @@ const Group: React.FC = () => {
             {filteredTeams.map((team) => (
               <div
                 key={team.id}
-                className="group-card"
+                className="group-card dark:bg-gray-700 dark:border-gray-600 dark:hover:bg-gray-600"
                 onClick={() => navigate(`/teams/${team.id}`)}
               >
                 <div className="group-image">
-                  {/* Use a generic image or based on team acronym */}
                   <img
                     src={`https://ui-avatars.com/api/?name=${encodeURIComponent(team.acro)}&size=200&background=random&bold=true&color=fff`}
                     alt={team.name}
                   />
-                  <div className="group-overlay">
-                    <span className="group-focus">{team.acro}</span>
+                  <div className="group-overlay dark:bg-opacity-70">
+                    <div className="overlay-top">
+                      <span className="group-focus dark:bg-blue-600 dark:text-white">
+                        {team.acro}
+                      </span>
+                      {team.projectCount > 0 && (
+                        <span className="featured-badge">
+                          <FaStar /> Active
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
-                <div className="group-content">
+                <div className="group-content dark:text-white">
                   <div className="group-header">
-                    <h2>{team.name}</h2>
-                    <span className="group-acronym">{team.acro}</span>
+                    <h2 className="group-title dark:text-white">{team.name}</h2>
+                    <span className="group-acronym dark:text-gray-300">
+                      {team.acro}
+                    </span>
                   </div>
-                  <p className="group-description">
+                  <p className="group-description dark:text-gray-300">
                     {team.description || "No description available"}
                   </p>
-                  <div className="group-meta">
-                    <div className="meta-item">
-                      <FaUsers />
+                  <div className="group-meta dark:text-gray-300">
+                    <div className="meta-item dark:text-gray-300">
+                      <FaUsers className="meta-icon" />
                       <span>{team.memberCount} Members</span>
                     </div>
-                    <div className="meta-item">
-                      <FaProjectDiagram />
+                    <div className="meta-item dark:text-gray-300">
+                      <FaProjectDiagram className="meta-icon" />
                       <span>{team.projectCount} Projects</span>
                     </div>
                   </div>
-                  <div className="group-action">
+                  <div className="group-action dark:text-blue-400 dark:hover:text-blue-300">
                     <span>View Details</span>
                     <FaArrowRight />
                   </div>
@@ -165,9 +166,19 @@ const Group: React.FC = () => {
           </div>
 
           {filteredTeams.length === 0 && (
-            <div className="empty-state">
-              <h3>No teams found</h3>
-              <p>Try adjusting your search or filter criteria</p>
+            <div className="empty-state dark:bg-gray-700 dark:text-white">
+              <h3 className="dark:text-white">No teams found</h3>
+              <p className="dark:text-gray-300">
+                Try adjusting your search criteria
+              </p>
+              <button
+                className="reset-filters-btn"
+                onClick={() => {
+                  setSearchTerm("");
+                }}
+              >
+                Reset Search
+              </button>
             </div>
           )}
         </>

@@ -1,19 +1,30 @@
-/**
- * Footer Component
- * 
- * Site-wide footer component that appears on all pages.
- * Features:
- * - Contact information
- * - Social media links
- * - Copyright information
- * - Quick links to important pages
- */
-
-import { Link } from 'react-router-dom';
-import { FaTwitter, FaLinkedinIn, FaResearchgate, FaGithub, FaEnvelope, FaPhone, FaMapMarkerAlt, FaArrowRight } from 'react-icons/fa';
-import './Footer.css';
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import {
+  FaTwitter,
+  FaLinkedinIn,
+  FaResearchgate,
+  FaGithub,
+  FaEnvelope,
+  FaPhone,
+  FaMapMarkerAlt,
+  FaArrowRight,
+} from "react-icons/fa";
+import "./Footer.css";
 
 const Footer = () => {
+  const [email, setEmail] = useState("");
+
+  const handleSubscribe = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (email) {
+      console.log("Email submitted:", email);
+      // Here you would typically call an API to handle the subscription
+      alert("Thanks for subscribing!");
+      setEmail("");
+    }
+  };
+
   return (
     <footer className="footer">
       <div className="footer-top">
@@ -23,16 +34,23 @@ const Footer = () => {
               Research<span>Lab</span>
             </Link>
             <p className="brand-description">
-              Pioneering research in thermal comfort, control systems, and sustainable energy solutions for a better tomorrow.
+              Pioneering research in thermal comfort, control systems, and
+              sustainable energy solutions for a better tomorrow.
             </p>
             <div className="newsletter">
               <h4>Stay Updated</h4>
-              <div className="newsletter-form">
-                <input type="email" placeholder="Enter your email" />
+              <form className="newsletter-form" onSubmit={handleSubscribe}>
+                <input
+                  type="email"
+                  placeholder="Enter your email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
                 <button type="submit">
                   <FaArrowRight />
                 </button>
-              </div>
+              </form>
             </div>
           </div>
 
@@ -64,7 +82,8 @@ const Footer = () => {
               <div className="contact-item">
                 <FaMapMarkerAlt />
                 <address>
-                  University Campus, Research Building<br />
+                  University Campus, Research Building
+                  <br />
                   Innovation District, City 12345
                 </address>
               </div>
@@ -74,22 +93,42 @@ const Footer = () => {
           <div className="footer-section social-section">
             <h4>Connect With Us</h4>
             <div className="social-links">
-              <a href="#" target="_blank" rel="noopener noreferrer" aria-label="Twitter">
+              <a
+                href="https://twitter.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Twitter"
+              >
                 <FaTwitter />
               </a>
-              <a href="#" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
+              <a
+                href="https://linkedin.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="LinkedIn"
+              >
                 <FaLinkedinIn />
               </a>
-              <a href="#" target="_blank" rel="noopener noreferrer" aria-label="ResearchGate">
+              <a
+                href="https://researchgate.net"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="ResearchGate"
+              >
                 <FaResearchgate />
               </a>
-              <a href="#" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
+              <a
+                href="https://github.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="GitHub"
+              >
                 <FaGithub />
               </a>
             </div>
             <div className="certifications">
-              <img src="/certification1.png" alt="Certification 1" />
-              <img src="/certification2.png" alt="Certification 2" />
+              <img src="/images/pattern.svg" alt="Certification 1" />
+              <img src="/images/team-illustration.svg" alt="Certification 2" />
             </div>
           </div>
         </div>
@@ -98,7 +137,10 @@ const Footer = () => {
       <div className="footer-bottom">
         <div className="footer-bottom-content">
           <div className="footer-bottom-left">
-            <p>&copy; {new Date().getFullYear()} ResearchLab. All rights reserved.</p>
+            <p>
+              &copy; {new Date().getFullYear()} ResearchLab. All rights
+              reserved.
+            </p>
           </div>
           <div className="footer-bottom-right">
             <Link to="/privacy">Privacy Policy</Link>
@@ -111,4 +153,4 @@ const Footer = () => {
   );
 };
 
-export default Footer; 
+export default Footer;

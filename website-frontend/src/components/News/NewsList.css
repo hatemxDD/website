@@ -1,175 +1,181 @@
+/**
+ * News List Component Styles
+ * Matches the styling of the Group component
+ */
+
+/* Import the Group component styles for reuse */
+@import "../Team/Group.css";
+
+/* News List container */
 .newslist-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 2rem;
-  background-color: #f8fafc;
-}
-
-.newslist-header {
-  text-align: center;
-  margin-bottom: 4rem;
   padding: 4rem 2rem;
-  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-  color: white;
-  border-radius: 20px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-  position: relative;
-  overflow: hidden;
 }
 
-.newslist-header::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: url('data:image/svg+xml,<svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><rect width="1" height="1" fill="rgba(255,255,255,0.05)"/></svg>');
-  opacity: 0.1;
-}
-
-.newslist-header h1 {
-  font-size: 3.5rem;
-  margin: 0 0 1.5rem 0;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-.newslist-header p {
-  font-size: 1.3rem;
-  opacity: 0.9;
-  margin: 0;
-  max-width: 700px;
-  margin: 0 auto;
-  line-height: 1.6;
-}
-
+/* News Grid */
 .newslist-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 2.5rem;
-  padding: 1rem;
+  margin-top: 2rem;
 }
 
+/* News Card */
 .newslist-card {
+  height: 400px;
   background: white;
-  border-radius: 20px;
+  border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-  transition: all 0.4s ease;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.07);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   cursor: pointer;
   position: relative;
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(226, 232, 240, 0.8);
 }
 
 .newslist-card:hover {
   transform: translateY(-10px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 20px 35px rgba(0, 0, 0, 0.1);
 }
 
+/* News image */
 .newslist-image-wrapper {
+  height: 200px;
   position: relative;
-  width: 100%;
-  height: 260px;
-  overflow: hidden;
 }
 
 .newslist-image-wrapper img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.6s ease;
+  transition: transform 0.7s ease;
 }
 
 .newslist-card:hover .newslist-image-wrapper img {
-  transform: scale(1.08);
+  transform: scale(1.05);
 }
 
+/* News overlay */
 .newslist-overlay {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(to bottom, rgba(0,0,0,0.2), rgba(0,0,0,0.7));
-  padding: 1.5rem;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
   display: flex;
   justify-content: space-between;
+  padding: 1rem;
   align-items: flex-start;
 }
 
 .newslist-category {
-  background: rgba(255, 255, 255, 0.95);
-  color: #0f172a;
-  padding: 0.6rem 1.2rem;
-  border-radius: 25px;
-  font-size: 0.9rem;
+  display: inline-block;
+  padding: 0.35rem 0.7rem;
+  background: #3b82f6;
+  color: white;
+  border-radius: 0.5rem;
+  font-size: 0.8rem;
   font-weight: 600;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .newslist-date {
   color: white;
-  font-size: 0.9rem;
-  font-weight: 500;
-  background: rgba(0, 0, 0, 0.3);
-  padding: 0.4rem 1rem;
-  border-radius: 15px;
+  font-size: 0.85rem;
 }
 
+/* News content */
 .newslist-content {
-  padding: 2rem;
+  padding: 1.5rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .newslist-content h2 {
-  font-size: 1.6rem;
-  margin: 0 0 1rem 0;
-  color: #0f172a;
-  font-weight: 700;
+  font-size: 1.4rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  color: #1e293b;
   line-height: 1.3;
-}
-
-.newslist-content p {
-  color: #475569;
-  margin: 0 0 1.5rem 0;
-  font-size: 1.1rem;
-  line-height: 1.6;
 }
 
 .newslist-author {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid #e2e8f0;
+  margin-top: auto;
 }
 
 .newslist-author-name {
-  font-weight: 600;
-  color: #0f172a;
-  font-size: 1.1rem;
+  font-size: 0.9rem;
+  color: #64748b;
 }
 
-.newslist-author-role {
-  color: #64748b;
-  font-size: 0.95rem;
+/* Loading and error states */
+.loading-state,
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  text-align: center;
+  padding: 2rem;
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+  font-size: 2rem;
+  margin-bottom: 1rem;
+  color: #3b82f6;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.newslist-empty {
+  text-align: center;
+  padding: 3rem;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 1rem;
+  margin-top: 2rem;
+}
+
+/* Dark mode overrides */
+.dark .newslist-card {
+  background-color: #1f2937;
+  border-color: #374151;
+}
+
+.dark .newslist-content h2 {
+  color: #f3f4f6;
+}
+
+.dark .newslist-empty {
+  background: rgba(31, 41, 55, 0.6);
 }
 
 @media (max-width: 768px) {
   .newslist-header h1 {
     font-size: 2.8rem;
   }
-  
+
   .newslist-header p {
     font-size: 1.1rem;
   }
-  
+
   .newslist-grid {
     grid-template-columns: 1fr;
     gap: 2rem;
   }
-  
+
   .newslist-image-wrapper {
     height: 220px;
   }
@@ -179,16 +185,16 @@
   .newslist-container {
     padding: 1rem;
   }
-  
+
   .newslist-content {
     padding: 1.5rem;
   }
-  
+
   .newslist-header {
     padding: 3rem 1.5rem;
   }
-  
+
   .newslist-header h1 {
     font-size: 2.2rem;
   }
-} 
+}

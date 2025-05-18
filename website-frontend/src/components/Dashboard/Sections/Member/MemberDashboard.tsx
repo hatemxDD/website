@@ -12,6 +12,7 @@ import {
   FaSignOutAlt,
   FaChevronDown,
   FaBars,
+  FaNewspaper,
 } from "react-icons/fa";
 
 interface SubMenuItem {
@@ -67,10 +68,29 @@ const MemberDashboard: React.FC = () => {
       path: "/dashboard/TeamMember/projects",
     },
     {
-      id: "publications",
+      id: "articles",
       icon: <FaBook className="w-5 h-5" />,
-      label: "Publications",
-      path: "/dashboard/TeamMember/publications",
+      label: "Articles",
+      submenu: [
+        {
+          id: "see-articles",
+          icon: <FaBook className="w-5 h-5" />,
+          label: "See Articles",
+          path: "/dashboard/TeamMember/articles",
+        },
+        {
+          id: "add-articles",
+          icon: <FaBook className="w-5 h-5" />,
+          label: "Add Articles",
+          path: "/dashboard/TeamMember/articles/add",
+        },
+      ],
+    },
+    {
+      id: "news",
+      icon: <FaNewspaper className="w-5 h-5" />,
+      label: "News",
+      path: "/dashboard/TeamMember/news",
     },
     {
       id: "profile",

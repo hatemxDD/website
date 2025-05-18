@@ -11,6 +11,7 @@ import {
 } from "react-icons/fa";
 import "./NewsDetail.css";
 import { newsService, News } from "../../services/newsService";
+import LoadingState from "../Common/LoadingState";
 
 const NewsDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -55,57 +56,22 @@ const NewsDetail: React.FC = () => {
   }, [id]);
 
   if (loading) {
-    return (
-      <div className="news-detail loading-container">
-        <div className="news-header skeleton-header">
-          <div className="back-button-skeleton"></div>
-          <div className="meta-skeleton">
-            <div className="meta-item-skeleton"></div>
-            <div className="meta-item-skeleton"></div>
-            <div className="meta-item-skeleton"></div>
-          </div>
-        </div>
-
-        <div className="news-content">
-          <div className="news-image skeleton-image">
-            <div className="loading-pulse"></div>
-          </div>
-
-          <div className="news-info skeleton-info">
-            <div className="skeleton-title"></div>
-            <div className="skeleton-description"></div>
-
-            <div className="skeleton-tags">
-              <div className="skeleton-tag"></div>
-              <div className="skeleton-tag"></div>
-              <div className="skeleton-tag"></div>
-            </div>
-
-            <div className="skeleton-actions">
-              <div className="skeleton-button"></div>
-              <div className="skeleton-button"></div>
-            </div>
-
-            <div className="skeleton-content">
-              <div className="skeleton-paragraph"></div>
-              <div className="skeleton-paragraph"></div>
-              <div className="skeleton-paragraph"></div>
-              <div className="skeleton-paragraph"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+    return <LoadingState type="detail" className="dark:bg-gray-800" />;
   }
 
   if (error || !currentNews) {
     return (
-      <div className="news-detail error-container">
-        <div className="error-message">
-          <div className="error-icon">!</div>
+      <div className="news-detail error-container dark:bg-gray-800">
+        <div className="error-message dark:bg-gray-700 dark:text-white">
+          <div className="error-icon dark:bg-gray-600">!</div>
           <h3>{error || "News article not found"}</h3>
-          <p>We couldn't find the news article you were looking for.</p>
-          <button onClick={() => navigate("/news")} className="back-button">
+          <p className="dark:text-gray-300">
+            We couldn't find the news article you were looking for.
+          </p>
+          <button
+            onClick={() => navigate("/news")}
+            className="back-button dark:bg-gray-600 dark:text-white dark:hover:bg-gray-500"
+          >
             <FaArrowLeft className="arrow-icon" />
             Back to News
           </button>
@@ -129,59 +95,64 @@ const NewsDetail: React.FC = () => {
     currentNews.image || `https://picsum.photos/seed/${currentNews.id}/800/500`;
 
   return (
-    <div className="news-detail">
-      <div className="news-header">
-        <Link to="/news" className="back-button">
+    <div className="news-detail dark:bg-gray-800">
+      <div className="news-header dark:bg-gray-800">
+        <Link
+          to="/news"
+          className="back-button dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
+        >
           <FaArrowLeft className="arrow-icon" />
           Back to News
         </Link>
-        <div className="news-meta">
-          <span className="meta-item">
+        <div className="news-meta dark:text-gray-300">
+          <span className="meta-item dark:text-gray-300">
             <FaCalendar className="meta-icon" />
             {formattedDate}
           </span>
-          <span className="meta-item">
+          <span className="meta-item dark:text-gray-300">
             <FaUser className="meta-icon" />
             {currentNews.author?.name || "Research Team"}
           </span>
-          <span className="meta-item">
+          <span className="meta-item dark:text-gray-300">
             <FaTag className="meta-icon" />
             {currentNews.category || "Research"}
           </span>
         </div>
       </div>
 
-      <div className="news-content">
-        <div className="news-hero">
-          <div className="news-image">
+      <div className="news-content dark:bg-gray-800">
+        <div className="news-hero dark:bg-gray-800">
+          <div className="news-image dark:border-gray-700">
             <img src={newsImage} alt={currentNews.title} />
           </div>
 
-          <div className="news-info">
-            <h1>{currentNews.title}</h1>
-            <p className="news-description">
+          <div className="news-info dark:bg-gray-800 dark:text-white">
+            <h1 className="dark:text-white">{currentNews.title}</h1>
+            <p className="news-description dark:text-gray-300">
               Published on {formattedDate}
               {currentNews.author ? ` by ${currentNews.author.name}` : ""}
             </p>
 
             <div className="news-tags">
-              <span className="news-tag primary-tag">
+              <span className="news-tag primary-tag dark:bg-blue-800 dark:text-white">
                 {currentNews.category || "Research"}
               </span>
-              <span className="news-tag">News</span>
+              <span className="news-tag dark:bg-gray-700 dark:text-white">
+                News
+              </span>
               {currentNews.status && (
-                <span className="news-tag status-tag">
+                <span className="news-tag status-tag dark:bg-green-800 dark:text-white">
                   {currentNews.status}
                 </span>
               )}
             </div>
 
             <div className="news-actions">
-              <button className="action-button">
+              <button className="action-button dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600">
                 <FaShare className="action-icon" />
                 Share
               </button>
-              <button className="action-button">
+              <button className="action-button dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600">
                 <FaBookmark className="action-icon" />
                 Save
               </button>
@@ -189,21 +160,21 @@ const NewsDetail: React.FC = () => {
           </div>
         </div>
 
-        <div className="news-body">
+        <div className="news-body dark:bg-gray-800 dark:text-gray-200">
           <div
             dangerouslySetInnerHTML={{ __html: currentNews.content || "" }}
           />
         </div>
 
         {relatedNews.length > 0 && (
-          <div className="related-news">
-            <h3>Related News</h3>
+          <div className="related-news dark:bg-gray-800">
+            <h3 className="dark:text-white">Related News</h3>
             <div className="related-grid">
               {relatedNews.map((related) => (
                 <Link
                   to={`/news/${related.id}`}
                   key={related.id}
-                  className="related-card"
+                  className="related-card dark:bg-gray-700 dark:border-gray-600 dark:hover:bg-gray-600"
                 >
                   <div className="related-image">
                     <img
@@ -214,12 +185,12 @@ const NewsDetail: React.FC = () => {
                       alt={related.title}
                     />
                   </div>
-                  <div className="related-content">
-                    <span className="related-date">
+                  <div className="related-content dark:text-white">
+                    <span className="related-date dark:text-gray-300">
                       {new Date(related.createdAt).toLocaleDateString()}
                     </span>
-                    <h4>{related.title}</h4>
-                    <span className="related-link">
+                    <h4 className="dark:text-white">{related.title}</h4>
+                    <span className="related-link dark:text-blue-400">
                       Read more <FaChevronRight className="chevron-icon" />
                     </span>
                   </div>

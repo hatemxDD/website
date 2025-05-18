@@ -1,21 +1,23 @@
-/**
- * GroupDetail Component
- *
- * This component represents the detailed view of a team, displaying:
- * - Team leader information with enhanced visibility
- * - Team members in a grid layout
- * - Related team articles and publications
- * - Responsive design for various screen sizes
- */
-
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { Users } from "lucide-react";
 import { TeamCard } from "./TeamCard";
 import { TeamArticles } from "./TeamArticles";
 import { ArticleSection } from "../Article/ArticleSection";
-import { teamsService, Team, TeamMember } from "../../services/teamsService";
+import { teamsService, Team } from "../../services/teamsService";
+import { usersService } from "../../services/usersService";
 import "./GroupDetail.css";
+
+// Extend the user interface to include profilePicture
+interface UserWithProfile {
+  id: number;
+  name: string;
+  email: string;
+  role?: string;
+  profilePicture?: string;
+  photo?: string;
+  image?: string;
+}
 
 interface TeamLeader {
   id: number;
@@ -44,120 +46,183 @@ function GroupDetail() {
 
   useEffect(() => {
     const fetchTeamData = async () => {
+      if (!id) {
+        setError("Team ID is required");
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
-        if (!id) {
-          throw new Error("Team ID is required");
-        }
+        const teamId = parseInt(id);
 
-        // Fetch team details
-        const teamResponse = await teamsService.getById(parseInt(id));
-        console.log(teamResponse);
+        // Fetch team and users data in parallel
+        const [teamResponse, allUsers] = await Promise.all([
+          teamsService.getById(teamId),
+          usersService.getAll(),
+        ]);
+
         setTeam(teamResponse);
 
-        // Setup team leader data
-        if (teamResponse.leader) {
-          setTeamLeader({
-            id: teamResponse.leader.id,
-            name: teamResponse.leader.name,
-            email: teamResponse.leader.email,
-            photo: `https://ui-avatars.com/api/?name=${encodeURIComponent(teamResponse.leader.name)}&size=200&background=4a90e2&color=fff`,
-            description: "Team Leader",
-            isLeader: true,
-          });
-        }
+        // Set up team leader
+        setTeamLeaderData(teamResponse, allUsers);
 
-        // Fetch all team members
-        const membersResponse = await teamsService.getAllTeamMembers();
-
-        // Transform members data - filter first for current team only
-        const transformedMembers = membersResponse
-          .filter(
-            (member) =>
-              member.teamId === parseInt(id) &&
-              member.user &&
-              member.userId !== teamResponse.leaderId
-          )
-          .map((member) => ({
-            id: member.user!.id,
-            name: member.user!.name,
-            email: member.user!.email,
-            description: member.user!.role || "Team Member",
-            photo: `https://ui-avatars.com/api/?name=${encodeURIComponent(
-              member.user!.name
-            )}&size=200&background=random&color=fff`,
-          }));
-
-        console.log(transformedMembers);
-        setTeamMembers(transformedMembers);
-        setLoading(false);
+        // Fetch and set up team members
+        await setTeamMembersData(teamId, allUsers);
       } catch (err) {
         setError(
           err instanceof Error
             ? err.message
             : "An error occurred while fetching team data"
         );
+      } finally {
         setLoading(false);
       }
+    };
+
+    // Helper function to set team leader data
+    const setTeamLeaderData = (
+      teamResponse: Team,
+      allUsers: UserWithProfile[]
+    ) => {
+      const teamLeader = allUsers.find(
+        (user) => user.id === teamResponse.leaderId
+      );
+
+      if (teamLeader) {
+        setTeamLeader({
+          id: teamLeader.id,
+          name: teamLeader.name,
+          email: teamLeader.email,
+          photo: teamLeader.image || "/default-profile.png",
+          description: "Team Leader",
+          isLeader: true,
+        });
+      }
+    };
+
+    // Helper function to fetch and set team members
+    const setTeamMembersData = async (
+      teamId: number,
+      allUsers: UserWithProfile[]
+    ) => {
+      const membersResponse = await teamsService.getAllTeamMembers();
+
+      const transformedMembers = membersResponse
+        .filter((member) => member.teamId === teamId)
+        .map((member) => {
+          const userDetails = allUsers.find(
+            (user) => user.id === member.userId
+          );
+          return {
+            id: member.userId,
+            name: userDetails?.name || "Unknown",
+            email: userDetails?.email || "",
+            description: member.user?.role || "Team Member",
+            photo: userDetails?.image || "/default-profile.png",
+          };
+        });
+
+      setTeamMembers(transformedMembers);
     };
 
     fetchTeamData();
   }, [id]);
 
   if (loading) {
-    return <div className="loading">Loading team data...</div>;
+    return (
+      <div className="loading-container dark:bg-gray-800">
+        <div className="loading-spinner"></div>
+        <p className="loading-text dark:text-gray-300">Loading team data...</p>
+      </div>
+    );
   }
 
   if (error) {
-    return <div className="error">Error: {error}</div>;
+    return (
+      <div className="error-container dark:bg-gray-800">
+        <div className="error-icon">❌</div>
+        <p className="error-message dark:text-red-300">Error: {error}</p>
+      </div>
+    );
   }
 
   if (!team) {
-    return <div className="not-found">Team not found</div>;
+    return (
+      <div className="not-found-container dark:bg-gray-800">
+        <div className="not-found-icon">🔍</div>
+        <p className="not-found-message dark:text-gray-300">Team not found</p>
+      </div>
+    );
   }
 
   return (
-    <div className="app">
-      <header className="team-header">
-        <Users size={48} className="team-icon" />
-        <h1>{team.name}</h1>
-        <p>
-          {team.description || "Building the future of technology together"}
-        </p>
-      </header>
-
-      {teamLeader && (
-        <div className="leader-section">
-          <div className="leader-content">
-            <div className="leader-info">
-              <h2 className="leader-title">Team Leader</h2>
-              <p className="leader-description">{teamLeader.description}</p>
-            </div>
-            <div className="leader-card-container">
-              <TeamCard
-                name={teamLeader.name}
-                description="Chief Technology Officer"
-                isLeader={teamLeader.isLeader}
-                photo={teamLeader.photo}
-              />
-            </div>
+    <div className="app dark:bg-gray-800">
+      <header className="team-header dark:bg-gray-900 dark:border-b dark:border-gray-700">
+        <div className="header-content">
+          <Users size={48} className="team-icon dark:text-blue-400" />
+          <div className="header-text">
+            <h1 className="dark:text-white">{team.name}</h1>
+            <p className="dark:text-gray-300">
+              {team.description || "Building the future of technology together"}
+            </p>
           </div>
         </div>
-      )}
+      </header>
 
-      <h2 className="members-title">Team Members</h2>
+      <div className="team-structure-container">
+        {teamLeader && (
+          <div className="leader-section dark:bg-gray-700 dark:border dark:border-gray-600 mb-8 rounded-lg">
+            <div className="leader-content p-6">
+              <div className="leader-info mb-4">
+                <h2 className="leader-title dark:text-white text-2xl font-bold">
+                  Team Leader
+                </h2>
+                <p className="leader-description dark:text-gray-300">
+                  {teamLeader.description}
+                </p>
+              </div>
+              <div className="leader-card-container">
+                <TeamCard
+                  name={teamLeader.name}
+                  description="Chief Technology Officer"
+                  isLeader={teamLeader.isLeader}
+                  photo={teamLeader.photo}
+                  email={teamLeader.email}
+                />
+              </div>
+            </div>
+          </div>
+        )}
 
-      <section className="team-grid">
-        {teamMembers.map((member, index) => (
-          <TeamCard
-            key={index}
-            name={member.name}
-            description={member.description}
-            photo={member.photo}
-            isLeader={false}
-          />
-        ))}
-      </section>
+        <div className="members-section dark:bg-gray-800 border dark:border-gray-700 rounded-lg p-6 mt-8">
+          <h2 className="members-title dark:text-white text-2xl font-bold mb-2">
+            Team Members
+          </h2>
+          <p className="members-subtitle dark:text-gray-400 mb-6">
+            Working together to achieve team goals
+          </p>
+
+          <section className="team-grid">
+            {teamMembers.length > 0 ? (
+              teamMembers.map((member, index) => (
+                <TeamCard
+                  key={index}
+                  name={member.name}
+                  description={member.description}
+                  photo={member.photo}
+                  isLeader={false}
+                  email={member.email}
+                />
+              ))
+            ) : (
+              <div className="no-members dark:text-gray-400">
+                No team members found
+              </div>
+            )}
+          </section>
+        </div>
+      </div>
 
       <TeamArticles />
       <ArticleSection />

@@ -268,17 +268,24 @@ const teamController = {
         return;
       }
 
-      // First delete all team members to avoid foreign key constraints
+      // First delete all associated projects
+      await prisma.project.deleteMany({
+        where: { teamId: Number(id) },
+      });
+
+      // Delete all team members to avoid foreign key constraints
       await prisma.teamMember.deleteMany({
         where: { teamId: Number(id) },
       });
 
-      // Then delete the team
+      // Finally delete the team
       await prisma.team.delete({
         where: { id: Number(id) },
       });
 
-      res.json({ message: "Team deleted successfully" });
+      res.json({
+        message: "Team and associated projects deleted successfully",
+      });
     } catch (error) {
       console.error("Error deleting team:", error);
       res.status(500).json({ message: "Server error while deleting team" });
@@ -505,13 +512,7 @@ const teamController = {
               name: true,
               email: true,
               role: true,
-            },
-          },
-          team: {
-            select: {
-              id: true,
-              name: true,
-              acro: true,
+              image: true,
             },
           },
         },

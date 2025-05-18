@@ -1,52 +1,37 @@
-/**
- * Publications Component
- *
- * This component displays a list of research publications with:
- * - Publication details including title, authors, date, and journal
- * - Impact factors and citation counts
- * - Links to full papers
- * - Responsive grid layout
- */
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Search,
-  Filter,
   User,
   Calendar,
   Book,
   ArrowRight,
-  GraduationCap,
-  Building,
-  ChevronDown,
-  ChevronUp,
-  Tag,
-  Image as ImageIcon,
+  Award,
+  FileText,
+  Bookmark,
+  TrendingUp,
 } from "lucide-react";
-import {
-  Publication,
-  publicationsService,
-} from "../../services/publicationsService";
+import { Publication } from "../../services/publicationsService";
 import "./Publications.css";
-import { Article, articlesService } from "../../services/articlesService";
+import { articlesService } from "../../services/articlesService";
 
 const Publications: React.FC = () => {
   const navigate = useNavigate();
   const [publications, setPublications] = useState<Publication[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [activePublication, setActivePublication] = useState<string | null>(
+    null
+  );
 
-  // States for filtering and searching
+  // States for searching
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterCategory, setFilterCategory] = useState<string>("");
-  const [filterJournal, setFilterJournal] = useState<string>("");
 
   // Sorting state
   const [sortConfig, setSortConfig] = useState<{
     key: keyof Publication;
     direction: "ascending" | "descending";
-  } | null>(null);
+  } | null>({ key: "date", direction: "descending" });
 
   useEffect(() => {
     const fetchPublications = async () => {
@@ -64,11 +49,9 @@ const Publications: React.FC = () => {
             ? new URL(article.journalLink).hostname
             : "Journal",
           abstract: article.content,
-          category: "Publication",
-          doi: `10.xxxx/article-${article.id}`,
           image: `https://picsum.photos/seed/${article.id}/800/500`,
-          impactFactor: (Math.random() * 5 + 1).toFixed(2),
           citations: Math.floor(Math.random() * 200),
+          impactFactor: (Math.random() * 5 + 1).toFixed(2),
         }));
 
         setPublications(mappedData);
@@ -90,24 +73,8 @@ const Publications: React.FC = () => {
     setSearchTerm(e.target.value);
   };
 
-  // Handle filter changes
-  const handleFilterChange = (filter: string, value: string) => {
-    switch (filter) {
-      case "category":
-        setFilterCategory(value);
-        break;
-      case "journal":
-        setFilterJournal(value);
-        break;
-      default:
-        break;
-    }
-  };
-
-  // Clear all filters
-  const clearFilters = () => {
-    setFilterCategory("");
-    setFilterJournal("");
+  // Clear search
+  const clearSearch = () => {
     setSearchTerm("");
   };
 
@@ -138,23 +105,7 @@ const Publications: React.FC = () => {
     });
   };
 
-  // Get category color based on category
-  const getCategoryColor = (category: string) => {
-    switch (category.toLowerCase()) {
-      case "publication":
-        return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200";
-      case "article":
-        return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200";
-      case "research":
-        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
-      case "review":
-        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200";
-      default:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200";
-    }
-  };
-
-  // Apply filters and sorting to get filtered publications
+  // Apply search and sorting to get filtered publications
   const getFilteredPublications = () => {
     let filtered = [...publications];
 
@@ -169,22 +120,9 @@ const Publications: React.FC = () => {
             item.authors.some((author) =>
               author.toLowerCase().includes(term)
             )) ||
-          (item.category && item.category.toLowerCase().includes(term)) ||
           (item.journal && item.journal.toLowerCase().includes(term)) ||
           (item.date && item.date.toString().includes(term))
       );
-    }
-
-    // Apply category filter
-    if (filterCategory) {
-      filtered = filtered.filter(
-        (item) => item.category.toLowerCase() === filterCategory.toLowerCase()
-      );
-    }
-
-    // Apply journal filter
-    if (filterJournal) {
-      filtered = filtered.filter((item) => item.journal === filterJournal);
     }
 
     // Apply sorting
@@ -218,192 +156,120 @@ const Publications: React.FC = () => {
     return content.substring(0, maxLength) + "...";
   };
 
-  // Get all unique categories for filtering
-  const getCategories = () => {
-    const categories = publications.map((pub) => pub.category);
-    return Array.from(new Set(categories));
+  // Get all unique journals for filtering
+  const getJournals = () => {
+    const journals = publications.map((pub) => pub.journal);
+    return Array.from(new Set(journals));
+  };
+
+  // Toggle card expansion
+  const toggleCardExpansion = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setActivePublication(activePublication === id ? null : id);
   };
 
   return (
-    <div className="space-y-8 max-w-[1200px] mx-auto p-4 md:p-8">
-      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-700 p-6 rounded-xl shadow-sm">
-        <h2 className="text-3xl font-bold text-gray-800 dark:text-white">
-          Research Publications
-        </h2>
-      </div>
+    <div className="min-h-screen bg-gradient-to-b from-white to-gray-50 dark:from-gray-900 dark:to-gray-950 pt-8 pb-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Header Section - Styled like Group.tsx */}
+        <div className="groups-header dark:bg-gray-800">
+          <h1 className="text-gradient dark:text-white">
+            Research Publications
+          </h1>
+          <div className="header-decoration">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+          <p className="dark:text-gray-300">
+            Explore our collection of cutting-edge research papers, articles,
+            and publications from renowned authors and journals
+          </p>
+        </div>
 
-      {loading ? (
-        <div className="flex justify-center items-center p-12">
-          <div className="animate-pulse flex flex-col items-center">
-            <div className="h-12 w-12 rounded-full bg-blue-200 dark:bg-blue-700 mb-4"></div>
-            <div className="text-gray-500 dark:text-gray-400">
-              Loading publications...
+        {/* Search Section */}
+        <div className="search-filter-container">
+          <div className="search-filter dark:bg-gray-700">
+            <div className="search-wrapper dark:bg-gray-600">
+              <Search className="search-icon dark:text-gray-300" />
+              <input
+                type="text"
+                placeholder="Search by title, author, or keyword..."
+                value={searchTerm}
+                onChange={handleSearchChange}
+                className="search-input dark:bg-gray-600 dark:text-white dark:placeholder-gray-400 dark:border-gray-500"
+              />
             </div>
           </div>
         </div>
-      ) : error ? (
-        <div
-          className="bg-red-100 border-l-4 border-red-500 text-red-700 px-6 py-4 rounded-md shadow-md"
-          role="alert"
-        >
-          <div className="flex items-center">
-            <div className="py-1">
-              <svg
-                className="w-6 h-6 mr-4 text-red-500"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth="2"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"
-                />
-              </svg>
-            </div>
-            <div>
-              <p className="font-bold">Error</p>
-              <p>{error}</p>
-            </div>
+
+        {/* Results Stats */}
+        <div className="flex justify-between items-center mb-6">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Showing{" "}
+            <span className="font-semibold text-gray-900 dark:text-white">
+              {getFilteredPublications().length}
+            </span>{" "}
+            of{" "}
+            <span className="font-semibold text-gray-900 dark:text-white">
+              {publications.length}
+            </span>{" "}
+            publications
+          </p>
+          <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+            <button
+              onClick={() =>
+                setSortConfig({ key: "date", direction: "descending" })
+              }
+              className={`px-3 py-1 rounded-md mr-2 ${
+                sortConfig?.key === "date" &&
+                sortConfig?.direction === "descending"
+                  ? "bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300"
+                  : "hover:bg-gray-100 dark:hover:bg-gray-800"
+              }`}
+            >
+              Recent
+            </button>
+            <button
+              onClick={() =>
+                setSortConfig({ key: "impactFactor", direction: "descending" })
+              }
+              className={`px-3 py-1 rounded-md ${
+                sortConfig?.key === "impactFactor" &&
+                sortConfig?.direction === "descending"
+                  ? "bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300"
+                  : "hover:bg-gray-100 dark:hover:bg-gray-800"
+              }`}
+            >
+              Highest Impact
+            </button>
           </div>
         </div>
-      ) : (
-        <>
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden border border-gray-100 dark:border-gray-700">
-            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-              <div className="flex flex-col md:flex-row gap-4">
-                <div className="flex-1">
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Search className="h-5 w-5 text-gray-400" />
-                    </div>
-                    <input
-                      type="text"
-                      placeholder="Search publications..."
-                      value={searchTerm}
-                      onChange={handleSearchChange}
-                      className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg leading-5 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-colors duration-200"
-                    />
-                  </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="relative min-w-[180px]">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Filter className="h-5 w-5 text-gray-400" />
-                    </div>
-                    <select
-                      value={filterCategory}
-                      onChange={(e) =>
-                        handleFilterChange("category", e.target.value)
-                      }
-                      className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg leading-5 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-colors duration-200"
-                    >
-                      <option value="">All Categories</option>
-                      {getCategories().map((category) => (
-                        <option key={category} value={category}>
-                          {category.charAt(0).toUpperCase() + category.slice(1)}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  {(searchTerm || filterCategory || filterJournal) && (
-                    <button
-                      onClick={clearFilters}
-                      className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600"
-                    >
-                      Clear Filters
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
 
-          {/* Publications Grid */}
+        {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {getFilteredPublications().map((publication) => (
+            {[...Array(6)].map((_, index) => (
               <div
-                key={publication.id}
-                className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden border border-gray-100 dark:border-gray-700 hover:shadow-lg transition-shadow duration-300 flex flex-col h-full cursor-pointer"
-                onClick={() => handlePublicationClick(publication.id)}
+                key={index}
+                className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden border border-gray-100 dark:border-gray-700 animate-pulse"
               >
-                {publication.image && (
-                  <div className="relative h-48 overflow-hidden">
-                    <img
-                      src={publication.image}
-                      alt={publication.title}
-                      className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
-                    />
-                    <div className="absolute top-2 right-2">
-                      <span
-                        className={`px-3 py-1 inline-flex items-center text-xs leading-5 font-semibold rounded-full ${getCategoryColor(publication.category)}`}
-                      >
-                        {publication.category.charAt(0).toUpperCase() +
-                          publication.category.slice(1)}
-                      </span>
-                    </div>
-                  </div>
-                )}
-                {!publication.image && (
-                  <div className="h-32 bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 flex items-center justify-center">
-                    <ImageIcon className="h-12 w-12 text-gray-400 dark:text-gray-500" />
-                  </div>
-                )}
-                <div className="p-6 flex-grow flex flex-col">
-                  <div className="flex-grow">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 line-clamp-2 hover:text-blue-600 dark:hover:text-blue-400">
-                      {publication.title}
-                    </h3>
-                    <p className="text-gray-600 dark:text-gray-300 text-sm mb-4 line-clamp-3">
-                      {truncateContent(publication.abstract || "", 150)}
-                    </p>
-                  </div>
-                  <div className="mt-auto">
-                    <div className="flex flex-col space-y-2 text-xs text-gray-500 dark:text-gray-400 mb-4">
-                      <span className="flex items-center">
-                        <User className="w-3.5 h-3.5 mr-1" />
-                        {publication.authors.join(", ")}
-                      </span>
-                      <span className="flex items-center">
-                        <Calendar className="w-3.5 h-3.5 mr-1" />
-                        {formatDate(publication.date)}
-                      </span>
-                      <span className="flex items-center">
-                        <Book className="w-3.5 h-3.5 mr-1" />
-                        {publication.journal}
-                      </span>
-                      {publication.impactFactor && (
-                        <span className="flex items-center">
-                          <GraduationCap className="w-3.5 h-3.5 mr-1" />
-                          Impact Factor: {publication.impactFactor}
-                        </span>
-                      )}
-                      {publication.citations && (
-                        <span className="flex items-center">
-                          <Building className="w-3.5 h-3.5 mr-1" />
-                          {publication.citations} Citations
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex justify-between items-center pt-4 border-t border-gray-100 dark:border-gray-700">
-                      <span className="text-xs text-gray-500 dark:text-gray-400">
-                        {publication.doi}
-                      </span>
-                      <button className="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">
-                        Read More
-                        <ArrowRight className="ml-1 w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
+                <div className="h-48 bg-gray-200 dark:bg-gray-700"></div>
+                <div className="p-6">
+                  <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-4"></div>
+                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full mb-2"></div>
+                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-5/6 mb-2"></div>
+                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-4/6 mb-4"></div>
+                  <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded w-full mt-4"></div>
                 </div>
               </div>
             ))}
-            {getFilteredPublications().length === 0 && (
-              <div className="col-span-full flex flex-col items-center justify-center bg-white dark:bg-gray-800 rounded-xl shadow p-12">
+          </div>
+        ) : error ? (
+          <div className="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 text-red-700 dark:text-red-400 px-6 py-8 rounded-md shadow-md">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
                 <svg
-                  className="w-16 h-16 text-gray-300 dark:text-gray-600 mb-4"
+                  className="w-8 h-8 text-red-500"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -411,22 +277,147 @@ const Publications: React.FC = () => {
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    strokeWidth={1}
-                    d="M9.663 17h4.673M12 3v1m0 16v1m-9-9h1m16 0h1m-2.947-7.053l-.708.708M5.654 7.655l-.708-.708M5.654 16.345l-.708.708m14.702-7.398l-.708-.708"
+                    strokeWidth={2}
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
                   />
                 </svg>
-                <h3 className="text-xl font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  No publications found
-                </h3>
-                <p className="text-gray-500 dark:text-gray-400 text-center max-w-md">
-                  Try adjusting your search criteria or check back later for new
-                  publications.
-                </p>
               </div>
-            )}
+              <div className="ml-4">
+                <h3 className="text-lg font-medium text-red-800 dark:text-red-300">
+                  Error Loading Publications
+                </h3>
+                <p className="mt-2 text-red-700 dark:text-red-400">{error}</p>
+                <button
+                  className="mt-3 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 dark:text-red-200 dark:bg-red-800/40 dark:hover:bg-red-800/60 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                  onClick={() => window.location.reload()}
+                >
+                  Try Again
+                </button>
+              </div>
+            </div>
           </div>
-        </>
-      )}
+        ) : (
+          <>
+            {/* Publications Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {getFilteredPublications().map((publication) => (
+                <div
+                  key={publication.id}
+                  className={`bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden border border-gray-100 dark:border-gray-700 transition-all duration-300 hover:shadow-xl ${
+                    activePublication === publication.id
+                      ? "ring-2 ring-indigo-500 transform scale-[1.02]"
+                      : "hover:transform hover:scale-[1.01]"
+                  }`}
+                >
+                  <div
+                    className="cursor-pointer group"
+                    onClick={(e) => toggleCardExpansion(publication.id, e)}
+                  >
+                    {publication.image && (
+                      <div className="relative h-48 overflow-hidden">
+                        <img
+                          src={publication.image}
+                          alt={publication.title}
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        />
+                        <div className="absolute top-0 inset-x-0 h-48 bg-gradient-to-b from-black/50 to-transparent opacity-70"></div>
+                        <div className="absolute top-4 right-4 flex space-x-2">
+                          <span className="px-2 py-1 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-md text-xs font-medium flex items-center text-amber-600 dark:text-amber-400">
+                            <Award className="w-3.5 h-3.5 mr-1" />
+                            {publication.impactFactor}
+                          </span>
+                          <span className="px-2 py-1 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-md text-xs font-medium flex items-center text-blue-600 dark:text-blue-400">
+                            <TrendingUp className="w-3.5 h-3.5 mr-1" />
+                            {Math.floor(Math.random() * 200)}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                    {!publication.image && (
+                      <div className="h-32 bg-gradient-to-r from-indigo-100 to-purple-100 dark:from-indigo-900/30 dark:to-purple-900/30 flex items-center justify-center">
+                        <FileText className="h-12 w-12 text-indigo-400 dark:text-indigo-500" />
+                      </div>
+                    )}
+                    <div className="p-6">
+                      <div className="mb-3 flex justify-between items-start">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 line-clamp-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors duration-200">
+                          {publication.title}
+                        </h3>
+                        <button className="ml-2 mt-1 flex-shrink-0 text-gray-400 hover:text-indigo-500 dark:text-gray-500 dark:hover:text-indigo-400 transition-colors duration-200">
+                          <Bookmark className="w-4 h-4" />
+                        </button>
+                      </div>
+
+                      <div className="flex items-center text-sm text-gray-500 dark:text-gray-400 mb-3">
+                        <Calendar className="w-4 h-4 mr-1.5 text-gray-400 dark:text-gray-500" />
+                        {formatDate(publication.date)}
+                        <span className="mx-2">•</span>
+                        <Book className="w-4 h-4 mr-1.5 text-gray-400 dark:text-gray-500" />
+                        {publication.journal}
+                      </div>
+
+                      <p
+                        className={`text-gray-600 dark:text-gray-300 text-sm mb-4 ${
+                          activePublication === publication.id
+                            ? ""
+                            : "line-clamp-3"
+                        }`}
+                      >
+                        {truncateContent(
+                          publication.abstract || "",
+                          activePublication === publication.id ? 500 : 150
+                        )}
+                      </p>
+
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        {publication.authors.map((author, idx) => (
+                          <span
+                            key={idx}
+                            className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300"
+                          >
+                            <User className="w-3 h-3 mr-1" />
+                            {author}
+                          </span>
+                        ))}
+                      </div>
+
+                      <div className="pt-4 border-t border-gray-100 dark:border-gray-700 flex justify-end items-center">
+                        <button
+                          className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-700 dark:hover:bg-indigo-600 rounded-md transition-colors duration-200"
+                          onClick={() => handlePublicationClick(publication.id)}
+                        >
+                          Read Paper
+                          <ArrowRight className="ml-1.5 w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {getFilteredPublications().length === 0 && (
+                <div className="col-span-full flex flex-col items-center justify-center bg-white dark:bg-gray-800 rounded-xl shadow-md p-12 border border-gray-100 dark:border-gray-700">
+                  <div className="w-24 h-24 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center mb-6">
+                    <FileText className="w-12 h-12 text-gray-400 dark:text-gray-500" />
+                  </div>
+                  <h3 className="text-2xl font-medium text-gray-800 dark:text-gray-200 mb-2">
+                    No publications found
+                  </h3>
+                  <p className="text-gray-500 dark:text-gray-400 text-center max-w-md mb-6">
+                    We couldn't find any publications matching your search
+                    criteria. Try a different search term.
+                  </p>
+                  <button
+                    onClick={clearSearch}
+                    className="inline-flex items-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:bg-indigo-700 dark:hover:bg-indigo-600"
+                  >
+                    Clear Search
+                  </button>
+                </div>
+              )}
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 };

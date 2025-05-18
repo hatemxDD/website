@@ -1,74 +1,77 @@
 // seed to create fake users data
-import { PrismaClient, Role, Prisma } from "@prisma/client";
+import { PrismaClient, Role, Prisma, ProjectState } from "@prisma/client";
 import { faker } from "@faker-js/faker";
 import bcrypt from "bcrypt";
 
 const prisma = new PrismaClient();
 
 async function main() {
-  // const users: Prisma.UserCreateManyInput[] = [];
+  const users: Prisma.UserCreateManyInput[] = [];
 
-  // // Create 2 TeamLeaders
-  // for (let i = 0; i < 2; i++) {
-  //   const password = await bcrypt.hash("password123", 10);
-  //   users.push({
-  //     email: faker.internet.email(),
-  //     name: faker.person.fullName(),
-  //     password,
-  //     role: Role.TeamLeader,
-  //   });
-  // }
+  // Get created users
+  const createdUsers = await prisma.user.findMany();
 
-  // // Create 10 TeamMembers
-  // for (let i = 0; i < 10; i++) {
-  //   const password = await bcrypt.hash("password123", 10);
-  //   users.push({
-  //     email: faker.internet.email(),
-  //     name: faker.person.fullName(),
-  //     password,
-  //     role: Role.TeamMember,
-  //   });
-  // }
-
-  // await prisma.user.createMany({
-  //   data: users,
-  // });
-
-  // console.log("✅ Seeded users successfully!");
-
-  // Get all users to assign as news authors
-  const allUsers = await prisma.user.findMany();
-
-  // Create 5 news entries
-  const newsCategories = [
-    "general",
-    "science",
-    "technology",
-    "events",
-    "achievements",
+  // Create teams
+  const teamNames = [
+    "Quantum Computing",
+    "Artificial Intelligence",
+    "Robotics",
   ];
-  const newsStatus = ["published", "draft"];
+  const teamAcros = ["QC", "AI", "ROB"];
 
+  for (let i = 0; i < 3; i++) {
+    // Find a team leader
+    const leader = createdUsers.find(
+      (u) => u.role === "TeamLeader" && !u.email.includes("used")
+    );
+
+    if (leader) {
+      // Mark this leader as used (simple way to avoid reusing the same leader)
+      leader.email = leader.email + ".used";
+
+      await prisma.team.create({
+        data: {
+          name: teamNames[i],
+          acro: teamAcros[i],
+          description: faker.lorem.paragraph(),
+          leaderId: leader.id,
+          memberUsers: {
+            connect: createdUsers
+              .filter((u) => u.role === "TeamMember")
+              .slice(i * 3, i * 3 + 3)
+              .map((u) => ({ id: u.id })),
+          },
+        },
+      });
+    }
+  }
+
+  // Create articles for some users
   for (let i = 0; i < 5; i++) {
-    const randomUser = allUsers[Math.floor(Math.random() * allUsers.length)];
+    const randomUser =
+      createdUsers[Math.floor(Math.random() * createdUsers.length)];
+    const coAuthors = createdUsers
+      .filter((u) => u.id !== randomUser.id)
+      .slice(0, Math.floor(Math.random() * 3)); // 0-2 co-authors
 
-    await prisma.news.create({
+    await prisma.article.create({
       data: {
         title: faker.lorem.sentence(),
-        content: faker.lorem.paragraphs(3),
-        image: faker.image.url({ width: 640, height: 480 }),
-        category: newsCategories[i % newsCategories.length],
-        status: newsStatus[Math.floor(Math.random() * newsStatus.length)],
-        publishDate: faker.date.between({
-          from: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-          to: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-        }),
-        authorId: 2,
+        content: faker.lorem.paragraphs(5),
+        publishDate: faker.date.past(),
+        authorId: randomUser.id,
+        pdfLink: Math.random() > 0.5 ? faker.internet.url() : null,
+        journalLink: Math.random() > 0.5 ? faker.internet.url() : null,
+        coAuthors: {
+          connect: coAuthors.map((u) => ({ id: u.id })),
+        },
       },
     });
   }
 
-  console.log("✅ Seeded news successfully!");
+  console.log(
+    `✅ Seeding completed: ${users.length} users created, with teams and articles`
+  );
 }
 
 main()

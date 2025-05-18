@@ -8,6 +8,7 @@ import teamRoutes from "./routes/team.routes";
 import projectRoutes from "./routes/project.routes";
 import newsRoutes from "./routes/news.routes";
 import articleRoutes from "./routes/article.routes";
+import contactRoutes from "./routes/contact.routes";
 
 // Load environment variables
 dotenv.config();
@@ -34,6 +35,7 @@ app.use("/api/teams", teamRoutes);
 app.use("/api/projects", projectRoutes);
 app.use("/api/news", newsRoutes);
 app.use("/api/articles", articleRoutes);
+app.use("/api/contact", contactRoutes);
 
 // Root route
 app.get("/", (req: Request, res: Response) => {
@@ -45,6 +47,7 @@ app.get("/", (req: Request, res: Response) => {
       "/api/projects",
       "/api/news",
       "/api/articles",
+      "/api/contact",
     ],
   });
 });

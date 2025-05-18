@@ -30,7 +30,6 @@ import AddMember from "./components/Dashboard/Sections/Create/AddMember";
 import AddProject from "./components/Dashboard/Sections/Create/AddProject";
 import EditMember from "./components/Dashboard/Sections/Edit/EditMember";
 import LabLeaderProjects from "./components/Dashboard/Sections/See/SeeProjects";
-import LabLeaderPublications from "./components/Dashboard/Sections/PublicationsManagement";
 import Settings from "./components/Dashboard/Sections/Settings";
 import SeeNews from "./components/Dashboard/Sections/See/SeeNews";
 import AddNews from "./components/Dashboard/Sections/Create/AddNews";
@@ -137,15 +136,10 @@ const AppRoutes = () => {
         <Route path="members/edit/:id" element={<EditMember />} />
         <Route path="members/remove/:id" element={<SeeMembers />} />
         <Route path="teams" element={<SeeTeams />} />
-        <Route path="teams/add" element={<AddTeam />} />
-        <Route path="teams/edit/:id" element={<SeeTeams />} />
-        <Route path="teams/remove/:id" element={<SeeTeams />} />
         <Route path="projects" element={<LabLeaderProjects />} />
         <Route path="articles" element={<SeeArticle />} />
         <Route path="articles/add" element={<AddArticle />} />
         <Route path="articles/edit/:id" element={<AddArticle />} />
-        <Route path="publications" element={<LabLeaderPublications />} />
-        <Route path="publications/add" element={<LabLeaderPublications />} />
         <Route path="news" element={<SeeNews />} />
         <Route path="news/add" element={<AddNews />} />
         <Route path="news/edit/:id" element={<EditNews />} />
@@ -173,7 +167,6 @@ const AppRoutes = () => {
         <Route path="articles" element={<SeeArticle />} />
         <Route path="articles/add" element={<AddArticle />} />
         <Route path="articles/edit/:id" element={<AddArticle />} />
-        <Route path="publications" element={<Publications />} />
         <Route path="profile" element={<Profile />} />
         <Route path="*" element={<Navigate to="overview" replace />} />
       </Route>
@@ -190,7 +183,9 @@ const AppRoutes = () => {
         <Route index element={<Navigate to="overview" replace />} />
         <Route path="overview" element={<MemberOverview />} />
         <Route path="projects" element={<MemberProjects />} />
-        <Route path="publications" element={<Publications />} />
+        <Route path="articles" element={<SeeArticle />} />
+        <Route path="articles/add" element={<AddArticle />} />
+        <Route path="articles/edit/:id" element={<AddArticle />} />
         <Route path="news" element={<SeeNews />} />
         <Route path="profile" element={<Profile />} />
         <Route path="*" element={<Navigate to="overview" replace />} />

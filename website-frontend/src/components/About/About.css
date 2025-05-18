@@ -4,10 +4,9 @@
  */
 
 .about-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 4rem 2rem;
+  padding: 4rem 2rem 0 2rem;
   background: #ffffff;
+  width: 100%;
 }
 
 /* Hero Section */
@@ -17,6 +16,9 @@
   border-radius: 12px;
   overflow: hidden;
   margin-bottom: 4rem;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .hero-overlay {
@@ -59,6 +61,9 @@
 /* Vision & Mission Section */
 .vision-mission {
   margin-bottom: 4rem;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .section-header {
@@ -130,6 +135,9 @@
 /* Research Focus Section */
 .research-focus {
   margin-bottom: 4rem;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .focus-content {
@@ -151,6 +159,9 @@
 /* Research Areas Section */
 .research-areas {
   margin-bottom: 4rem;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .areas-grid {
