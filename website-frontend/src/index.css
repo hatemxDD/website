@@ -4,11 +4,11 @@
 
 @layer base {
   :root {
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: "Inter", system-ui, sans-serif;
     line-height: 1.5;
     font-weight: 400;
-    color: theme('colors.secondary.800');
-    background-color: theme('colors.secondary.50');
+    color: theme("colors.secondary.800");
+    background-color: theme("colors.secondary.50");
     font-synthesis: none;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
@@ -21,11 +21,26 @@
     box-sizing: border-box;
   }
 
+  #root {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
   body {
     @apply min-h-screen bg-secondary-50 text-secondary-800;
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  main {
+    flex: 1;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     @apply font-display font-semibold text-secondary-900;
   }
 
@@ -43,6 +58,12 @@
 
   p {
     @apply text-secondary-600 leading-relaxed;
+  }
+
+  /* Footer consistency across pages */
+  .footer {
+    width: 100%;
+    margin-top: 4rem;
   }
 }
 

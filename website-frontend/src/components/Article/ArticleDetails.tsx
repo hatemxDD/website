@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { FaDownload, FaExternalLinkAlt } from "react-icons/fa";
+import LoadingSkeleton from "../Common/LoadingSkeleton";
+import { useTheme } from "../../contexts/ThemeContext";
+import { Sun, Moon } from "lucide-react";
 import "./ArticleDetails.css";
 
 interface Article {
@@ -20,6 +23,7 @@ const ArticleDetails: React.FC = () => {
   const [article, setArticle] = useState<Article | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { isDarkMode, toggleDarkMode } = useTheme();
 
   useEffect(() => {
     const fetchArticle = async () => {
@@ -46,9 +50,23 @@ const ArticleDetails: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="article-loading">
-        <div className="loading-spinner"></div>
-        <p>Loading article...</p>
+      <div className="article-details">
+        <div className="article-header">
+          <LoadingSkeleton type="title" width="70%" />
+          <div className="article-meta">
+            <LoadingSkeleton type="text" width="150px" />
+            <LoadingSkeleton type="text" width="120px" />
+          </div>
+        </div>
+
+        <div className="article-content">
+          <LoadingSkeleton type="paragraph" count={5} fullWidth />
+        </div>
+
+        <div className="article-actions">
+          <LoadingSkeleton type="button" width="150px" />
+          <LoadingSkeleton type="button" width="150px" />
+        </div>
       </div>
     );
   }
@@ -64,6 +82,19 @@ const ArticleDetails: React.FC = () => {
 
   return (
     <div className="article-details">
+      <button
+        onClick={toggleDarkMode}
+        className="theme-toggle-article"
+        aria-label={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
+        title={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
+      >
+        {isDarkMode ? (
+          <Sun className="h-4 w-4" />
+        ) : (
+          <Moon className="h-4 w-4" />
+        )}
+      </button>
+
       <div className="article-header">
         <h1>{article.title}</h1>
         <div className="article-meta">

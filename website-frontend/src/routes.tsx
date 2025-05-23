@@ -14,8 +14,6 @@ import { NewsList } from "./components/News/NewsList";
 import NewsDetail from "./components/News/NewsDetail";
 import Publications from "./components/Publications/Publications";
 import ArticleDetails from "./components/Article/ArticleDetails";
-import Projects from "./components/Dashboard/Projects";
-import ProjectDetails from "./components/Project/ProjectDetails";
 import ProfileWrapper from "./components/User/ProfileWrapper";
 
 // Import dashboard components
@@ -109,12 +107,8 @@ const AppRoutes = () => {
       <Route path="/teams" element={<Group />} />
       <Route path="/teams/:id" element={<GroupDetail />} />
 
-      {/* Projects Routes */}
-      <Route path="/projects" element={<Projects />} />
-      <Route path="/projects/:id" element={<ProjectDetails />} />
-
       {/* Publications Routes */}
-      <Route path="/articles" element={<SeeArticle />} />
+      <Route path="/publications" element={<Publications />} />
       <Route path="/articles/:id" element={<ArticleDetails />} />
 
       {/* Profile Route */}

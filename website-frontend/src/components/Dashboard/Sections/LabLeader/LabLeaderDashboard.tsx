@@ -8,8 +8,6 @@ import {
   FaUserFriends,
   FaNewspaper,
   FaUser,
-  FaMoon,
-  FaSun,
   FaSignOutAlt,
   FaChevronDown,
   FaTachometerAlt,
@@ -130,12 +128,7 @@ const LabLeaderDashboard: React.FC = () => {
       label: "Profile",
       path: "/dashboard/LabLeader/profile",
     },
-    {
-      id: "settings",
-      icon: <FaCog className="w-5 h-5" />,
-      label: "Settings",
-      path: "/dashboard/LabLeader/settings",
-    },
+  
   ];
 
   const handleLogout = () => {

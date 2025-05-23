@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { FaPlus, FaSearch, FaFilter, FaUsers } from "react-icons/fa";
+import { FaSearch, FaUsers } from "react-icons/fa";
 import { teamsService } from "../../../../services/teamsService";
 import { projectsService } from "../../../../services/projectsService";
 
@@ -36,7 +35,6 @@ interface Team {
 
 const SeeTeams: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterStatus, setFilterStatus] = useState("all");
   const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -60,18 +58,11 @@ const SeeTeams: React.FC = () => {
   }, []);
 
   const filteredTeams = teams.filter((team) => {
-    const matchesSearch =
+    return (
       team.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (team.description &&
-        team.description.toLowerCase().includes(searchTerm.toLowerCase()));
-
-    // For status filtering, using project count as an indicator of "active" vs "inactive"
-    // Teams with projects are considered active, those without are considered inactive
-    const status =
-      team._count && team._count.projects > 0 ? "active" : "inactive";
-    const matchesStatus = filterStatus === "all" || status === filterStatus;
-
-    return matchesSearch && matchesStatus;
+        team.description.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
   });
 
   const handleDeleteTeam = async (id: number) => {
@@ -120,13 +111,6 @@ const SeeTeams: React.FC = () => {
         <h2 className="text-2xl font-bold text-gray-800 dark:text-white">
           Lab Teams
         </h2>
-        <Link
-          to="/dashboard/LabLeader/teams/add"
-          className="flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200 shadow-md"
-        >
-          <FaPlus className="mr-2" />
-          Add Team
-        </Link>
       </div>
 
       {error && (
@@ -155,37 +139,6 @@ const SeeTeams: React.FC = () => {
                 />
               </div>
             </div>
-            <div className="md:w-64">
-              <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <FaFilter className="h-5 w-5 text-gray-400 group-hover:text-blue-500 transition-colors duration-200" />
-                </div>
-                <select
-                  value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value)}
-                  className="block w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg leading-5 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all duration-200 shadow-sm hover:shadow-md appearance-none cursor-pointer"
-                >
-                  <option value="all">All Statuses</option>
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                </select>
-                <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-                  <svg
-                    className="h-5 w-5 text-gray-400"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                    aria-hidden="true"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
 
@@ -209,9 +162,6 @@ const SeeTeams: React.FC = () => {
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     Members
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Status
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     Created Date
@@ -244,32 +194,13 @@ const SeeTeams: React.FC = () => {
                               : 0}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            team._count && team._count.projects > 0
-                              ? "bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100"
-                              : "bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100"
-                          }`}
-                        >
-                          {team._count && team._count.projects > 0
-                            ? "Active"
-                            : "Inactive"}
-                        </span>
-                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
                         {new Date(team.createdAt).toLocaleDateString()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <Link
-                          to={`/dashboard/lab-leader/teams/edit/${team.id}`}
-                          className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
-                        >
-                          Edit
-                        </Link>
                         <button
                           onClick={() => handleDeleteTeam(team.id)}
-                          className="ml-4 text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+                          className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
                         >
                           Delete
                         </button>
@@ -279,10 +210,10 @@ const SeeTeams: React.FC = () => {
                 ) : (
                   <tr>
                     <td
-                      colSpan={7}
+                      colSpan={6}
                       className="px-6 py-4 text-center text-gray-500 dark:text-gray-400"
                     >
-                      {searchTerm || filterStatus !== "all"
+                      {searchTerm
                         ? "No teams match your search criteria"
                         : "No teams found. Add some teams to get started!"}
                     </td>

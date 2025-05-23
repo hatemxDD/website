@@ -12,7 +12,14 @@ export interface User {
   photo?: string;
   image?: string;
   createdAt?: string;
-
+  teams?: {
+    id: number;
+    name: string;
+  }[];
+  leadingTeams?: {
+    id: number;
+    name: string;
+  }[];
   // Add other user properties as needed
 }
 

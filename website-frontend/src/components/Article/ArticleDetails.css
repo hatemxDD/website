@@ -3,8 +3,12 @@
   max-width: 1200px;
   margin: 2rem auto;
   padding: 0 1rem;
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
   color: #2c3e50;
+  position: relative;
 }
 
 /* Article Header */
@@ -129,4 +133,114 @@
 .article-not-found {
   text-align: center;
   padding: 4rem 2rem;
+}
+
+/* Dark Mode Styles */
+.dark .article-details {
+  color: #e2e8f0;
+}
+
+.dark .article-header h1 {
+  color: #f1f5f9;
+}
+
+.dark .article-meta {
+  color: #94a3b8;
+}
+
+.dark .article-meta .author {
+  color: #a3b1c6;
+}
+
+.dark .article-info {
+  color: #94a3b8;
+}
+
+.dark .article-content {
+  color: #cbd5e1;
+}
+
+.dark .article-content p {
+  color: #cbd5e1;
+  font-weight: 400;
+}
+
+.dark .tag {
+  background-color: #334155;
+  color: #e2e8f0;
+}
+
+.dark .tag:hover {
+  background-color: #475569;
+}
+
+/* Action buttons in dark mode */
+.dark .action-button {
+  font-weight: 500;
+}
+
+.dark .action-button:first-child {
+  background-color: #2a7bb9;
+}
+
+.dark .action-button:last-child {
+  background-color: #27ae60;
+}
+
+.dark .action-button:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Error message in dark mode */
+.dark .error-message {
+  color: #fca5a5;
+  background-color: #471818;
+}
+
+.dark .article-not-found {
+  color: #f1f5f9;
+}
+
+.dark .article-not-found h2 {
+  color: #f8fafc;
+}
+
+.dark .article-not-found p {
+  color: #cbd5e1;
+}
+
+/* Theme Toggle Button */
+.theme-toggle-article {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  color: #555;
+  background-color: #f0f2f5;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.dark .theme-toggle-article {
+  background-color: #374151;
+  color: #f3f4f6;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.theme-toggle-article:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.dark .theme-toggle-article:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }

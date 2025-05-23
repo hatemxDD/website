@@ -5,6 +5,7 @@ import { FaUserPlus, FaSearch, FaFilter } from "react-icons/fa";
 import { usersService, User } from "../../../../services/usersService";
 import { teamsService } from "../../../../services/teamsService";
 import { Role } from "../../../../types/type";
+import LoadingSkeleton from "../../../Common/LoadingSkeleton";
 
 // Extend User interface to include team memberships
 interface UserWithTeams extends User {
@@ -29,6 +30,7 @@ interface Member {
   email: string;
   role: string;
   team?: string;
+  leadingTeams?: string;
   createdAt: string;
   academicGrade?: string;
   image?: string;
@@ -62,19 +64,20 @@ const SeeMembers: React.FC<SeeMembersProps> = ({ title = "Lab Members" }) => {
       try {
         setLoading(true);
         const data = await usersService.getAll();
-
+        console.log(data);
         // Transform API data to match our Member interface
         const formattedMembers = data.map((user) => ({
           id: user.id,
           name: user.name,
           email: user.email,
           role: typeof user.role === "string" ? user.role : Role[user.role],
-          team: user.team || "",
+          team: user.teams?.[0]?.name || user.leadingTeams?.[0]?.name || "-",
           createdAt: user.createdAt || new Date().toISOString().split("T")[0],
           academicGrade: "Member", // Default value
           image: user.image,
         }));
 
+        console.log(formattedMembers);
         setMembersData(formattedMembers);
         setError(null);
       } catch (err) {
@@ -104,6 +107,9 @@ const SeeMembers: React.FC<SeeMembersProps> = ({ title = "Lab Members" }) => {
         break;
       case "joinDate":
         setFilterJoinDate(value);
+        break;
+      case "team":
+        setFilterTeam(value);
         break;
       default:
         break;
@@ -329,8 +335,108 @@ const SeeMembers: React.FC<SeeMembersProps> = ({ title = "Lab Members" }) => {
         </div>
 
         {loading ? (
-          <div className="flex justify-center items-center p-8">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+          <div className="overflow-x-auto p-4">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead className="bg-gray-50 dark:bg-gray-700">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    Name
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    Email
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    Role
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    Team
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    Join Date
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                {Array(5)
+                  .fill(0)
+                  .map((_, index) => (
+                    <tr
+                      key={index}
+                      className="hover:bg-gray-50 dark:hover:bg-gray-700"
+                    >
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <div className="flex-shrink-0 h-10 w-10">
+                            <LoadingSkeleton
+                              type="circle"
+                              width="40px"
+                              height="40px"
+                            />
+                          </div>
+                          <div className="ml-4">
+                            <LoadingSkeleton
+                              type="text"
+                              width="120px"
+                              height="18px"
+                            />
+                            <LoadingSkeleton
+                              type="text"
+                              width="80px"
+                              height="14px"
+                              className="mt-1"
+                            />
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <LoadingSkeleton
+                          type="text"
+                          width="150px"
+                          height="18px"
+                        />
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <LoadingSkeleton
+                          type="tag"
+                          width="80px"
+                          height="24px"
+                        />
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <LoadingSkeleton
+                          type="text"
+                          width="100px"
+                          height="18px"
+                        />
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <LoadingSkeleton
+                          type="text"
+                          width="90px"
+                          height="18px"
+                        />
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right">
+                        <div className="flex justify-end gap-3">
+                          <LoadingSkeleton
+                            type="button"
+                            width="60px"
+                            height="30px"
+                          />
+                          <LoadingSkeleton
+                            type="button"
+                            width="60px"
+                            height="30px"
+                          />
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
           </div>
         ) : (
           <div className="overflow-x-auto">

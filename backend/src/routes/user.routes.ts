@@ -30,8 +30,8 @@ router.post(
 );
 
 // Admin routes
-router.get("/", authMiddleware, userController.getAllUsers);
-router.get("/:id", authMiddleware, userController.getUserById);
+router.get("/", userController.getAllUsers);
+router.get("/:id", userController.getUserById);
 router.put("/:id", authMiddleware, userController.updateUser);
 router.delete(
   "/:id",

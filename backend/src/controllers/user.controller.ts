@@ -48,6 +48,8 @@ interface AuthRequest extends Request {
     email: string;
     role: Role;
     image?: string;
+    team?: string;
+    leadingTeams?: string;
   };
 }
 
@@ -157,6 +159,18 @@ const userController = {
           name: true,
           role: true,
           image: true,
+          teams: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          leadingTeams: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
           createdAt: true,
           updatedAt: true,
         },
